@@ -1,7 +1,14 @@
 -- Синхронизация схемы public (приложение АЗС-Пульт) со схемой azs (аналитика).
--- Запускается пайплайном после post.sql. Новые АЗС и их данные подтягиваются автоматически.
--- Станции совпадают по названию: уже существующие UUID сохраняются, отсутствующие в azs удаляются вместе с данными.
+-- Запускается пайплайном после post.sql и после каждой загрузки CSV через интерфейс.
+-- Станции совпадают по названию: существующие UUID сохраняются.
+-- public.azs.source: 'analytics' — станция из azs (синхронизируется и может быть удалена при исчезновении из azs);
+-- 'manual' — создана в приложении вручную (синхронизация её не трогает).
 BEGIN;
+
+-- Существующие строки до появления колонки создавались только синхронизацией, поэтому получают 'analytics'.
+-- Новые строки без явного значения (создание через API) — 'manual'.
+ALTER TABLE public.azs ADD COLUMN IF NOT EXISTS source text NOT NULL DEFAULT 'analytics';
+ALTER TABLE public.azs ALTER COLUMN source SET DEFAULT 'manual';
 
 -- Станции из azs и виды топлива в формате приложения (AI92 -> A92)
 CREATE TEMP TABLE st AS
@@ -11,18 +18,25 @@ SELECT s.station_code, s.station_name, s.road_type,
          WHERE f.station_code = s.station_code AND f.sales_volume > 0), '{}') AS fuels
 FROM azs.station s;
 
--- Удаляем АЗС, которых нет в новой выгрузке, и всё, что на них ссылается
-DELETE FROM public.recommendations WHERE azs_id IN (SELECT id FROM public.azs WHERE name NOT IN (SELECT station_name FROM st));
-DELETE FROM public.azs_access      WHERE azs_id IN (SELECT id FROM public.azs WHERE name NOT IN (SELECT station_name FROM st));
+-- Удаляем станции из аналитики, которых нет в новой выгрузке, и всё, что на них ссылается.
+-- Станции, созданные вручную (source = 'manual'), не трогаем.
+DELETE FROM public.recommendations WHERE azs_id IN
+  (SELECT id FROM public.azs WHERE source = 'analytics' AND name NOT IN (SELECT station_name FROM st));
+DELETE FROM public.azs_access WHERE azs_id IN
+  (SELECT id FROM public.azs WHERE source = 'analytics' AND name NOT IN (SELECT station_name FROM st));
 DELETE FROM public.price_test_plan WHERE btrim(station_code::text) NOT IN (SELECT station_code FROM st);
-DELETE FROM public.azs             WHERE name NOT IN (SELECT station_name FROM st);
+DELETE FROM public.azs WHERE source = 'analytics' AND name NOT IN (SELECT station_name FROM st);
 
--- Добавляем новые АЗС
+-- Добавляем новые АЗС из аналитики
 -- region в выгрузке нет (NOT NULL): берём регион, который уже стоит у АЗС в приложении
-INSERT INTO public.azs (name, address, region, fuel_types, status, created_at, updated_at)
-SELECT s.station_name, s.road_type, 'Tver region', s.fuels, 'active', now(), now()
+INSERT INTO public.azs (name, address, region, fuel_types, status, source, created_at, updated_at)
+SELECT s.station_name, s.road_type, 'Tver region', s.fuels, 'active', 'analytics', now(), now()
 FROM st s
 WHERE NOT EXISTS (SELECT 1 FROM public.azs a WHERE a.name = s.station_name);
+
+-- Станции из аналитики помечаются источником (в том числе уже существующие с тем же названием)
+UPDATE public.azs a SET source = 'analytics'
+FROM st s WHERE a.name = s.station_name AND a.source <> 'analytics';
 
 -- Соответствие station_code (azs) -> id (public)
 CREATE TEMP TABLE sm AS
