@@ -1,0 +1,107 @@
+/* Корпоративная палитра АЗС-Пульт (вариант B: тёмно-синий и бирюзовый акцент).
+   Менять цвета только здесь: компоненты используют переменные. */
+:root {
+  --brand: #0F2A44;          /* шапка, заголовки разделов на градиентах */
+  --accent: #0E7C86;         /* кнопки, ссылки, активные пункты, активные вкладки */
+  --accent-soft: #e6f4f5;    /* фон активного пункта меню */
+  --side-top: #2d5f8c;       /* боковая панель: верх градиента, светлее шапки */
+  --side-bottom: #22507a;    /* низ градиента */
+  --side-text: #e3ecf5;      /* подписи пунктов */
+  --side-tile: rgba(255, 255, 255, 0.14);   /* плитка иконки */
+  --accent-rgb: 14, 124, 134;
+  --bg: #f4f6f8;             /* фон страницы */
+  --card: #ffffff;
+  --line: #e1e6eb;
+  --text: #1f2933;
+  --muted: #6b7785;
+  --up: #2e7d32;             /* рост показателя */
+  --down: #c62828;           /* падение показателя, срочно */
+  --warn: #b26a00;           /* HIGH */
+}
+
+/* Единый стиль таблиц на всех вкладках. Селектор :root .table сильнее локальных правил компонентов,
+   поэтому стиль одинаков везде: бирюзовые заголовки, числа справа, тонкие разделители */
+:root .table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--card);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(15, 42, 68, 0.08);
+  font-size: 0.9rem;
+}
+
+:root .table th {
+  background: #e6f4f5;
+  color: #135a60;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid #cfe6e8;
+  text-align: left;
+  white-space: nowrap;
+}
+
+:root .table td {
+  padding: 0.55rem 0.8rem;
+  border-bottom: 1px solid #eef1f4;
+  text-align: left;
+  vertical-align: middle;
+  color: var(--text);
+}
+
+/* полоски через строку: глаз не теряет строку в длинной таблице */
+:root .table tbody tr:nth-child(even) td {
+  background: #fafcfc;
+}
+
+/* при наведении строка подсвечивается, слева появляется акцентная полоса */
+:root .table tbody tr:hover td {
+  background: #eef8f8;
+}
+
+:root .table tbody tr:hover td:first-child {
+  box-shadow: inset 3px 0 0 #0E7C86;
+}
+
+/* первый столбец (название, номер, станция) выделен жирным */
+:root .table td:first-child {
+  font-weight: 600;
+  color: #1f2933;
+}
+
+:root .table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+:root .table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Иконка рядом с заголовком страницы (набор как в боковой панели) */
+.h-icon {
+  width: 1.2em;
+  height: 1.2em;
+  margin-right: 0.25em;
+  vertical-align: -0.2em;
+  color: var(--accent);
+}
+
+/* Логотип: значок топливной колонки (LogoMark.vue), цвет берётся из текста */
+.logo-icon {
+  width: 1.25em;
+  height: 1.25em;
+  margin-right: 0.35em;
+  vertical-align: -0.22em;
+}
+
+.logo-ver {
+  font-size: 0.6em;
+  font-weight: 400;
+  opacity: 0.7;
+  margin-left: 0.2em;
+}

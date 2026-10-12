@@ -1,0 +1,131 @@
+/*
+ * Адаптивность: общие правила для телефонов и планшетов.
+ * Точки: до 768px — планшет/телефон, до 480px — узкий телефон.
+ * Таблицы прокручиваются внутри себя, а не растягивают страницу; шапки и фильтры переносятся.
+ */
+
+/* Основная колонка не должна выталкивать страницу шире экрана */
+.main-content,
+.app-body {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  /* Таблицы превращаются в карточки: каждая строка — отдельный блок, подпись колонки берётся из data-label */
+  table,
+  tbody {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  thead {
+    /* заголовки колонок становятся подписями в карточках, сама шапка скрыта */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  tr {
+    display: block;
+    margin: 0 0 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #e3e8ef;
+    border-radius: 10px;
+    background: #fff;
+  }
+
+  td {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.75rem;
+    padding: 0.35rem 0;
+    border: none !important;
+    text-align: left;
+    word-break: break-word;
+  }
+
+  td::before {
+    content: attr(data-label);
+    flex: 0 0 40%;
+    max-width: 40%;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: #6b7785;
+  }
+
+  /* Ячейки без подписи (заглушки, колонка действий без заголовка) — на всю ширину */
+  td:not([data-label]),
+  td[data-label=""] {
+    display: block;
+    text-align: left;
+  }
+
+  td:not([data-label])::before,
+  td[data-label=""]::before {
+    content: none;
+  }
+
+  /* Пустые строки-заглушки (colspan) не оформляются карточкой */
+  tr:has(> td[colspan]) {
+    border: none;
+    background: transparent;
+    padding: 0.5rem 0;
+  }
+
+  /* Строки шапок и панелей фильтров переносятся, а не уезжают за экран */
+  .head,
+  .head-actions,
+  .filters,
+  .toolbar,
+  .actions,
+  .card-head,
+  .card-header,
+  .tabs {
+    flex-wrap: wrap;
+  }
+
+  .head h1,
+  .head h2 {
+    font-size: 1.4rem;
+  }
+
+  .filters {
+    gap: 0.6rem;
+  }
+
+  .filters label,
+  .filters select,
+  .filters input {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Кнопки в одну строку с переносом, не выходят за ширину */
+  .btn {
+    max-width: 100%;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Формы в одну колонку на узком экране */
+  .form {
+    grid-template-columns: 1fr !important;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .cards {
+    grid-template-columns: 1fr !important;
+  }
+}
