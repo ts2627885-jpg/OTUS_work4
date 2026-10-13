@@ -1,15 +1,15 @@
-# Автоматический деплой: после успешного CI на ветке main.
-# Хостинг (Railway, Render, Vercel, Netlify и др.) выбирается отдельно: у большинства есть
-# «deploy hook» — URL, при POST на который платформа пересобирает и выкладывает приложение.
-# Адрес хука хранится в секрете репозитория DEPLOY_HOOK_URL
-# (Settings → Secrets and variables → Actions). Пока секрета нет, шаг пропускается.
+# Автоматический деплой: после успешного CI на ветках main и master.
+# Бэкенд — Render, фронтенд — Netlify. Каждый хук хранится в секрете репозитория
+# (Settings → Secrets and variables → Actions). Хук без секрета пропускается.
+#   RENDER_DEPLOY_HOOK_URL   — Render: сервис azs-pult-backend → Settings → Deploy Hook
+#   NETLIFY_BUILD_HOOK_URL   — Netlify: сайт → Site configuration → Build hooks
 name: Deploy
 
 on:
   workflow_run:
     workflows: [CI]
     types: [completed]
-    branches: [main]
+    branches: [main, master]
   workflow_dispatch:
 
 jobs:
@@ -18,13 +18,24 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     steps:
-      - name: Вызов deploy hook
+      - name: Бэкенд (Render)
         env:
-          DEPLOY_HOOK_URL: ${{ secrets.DEPLOY_HOOK_URL }}
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
-          if [ -z "$DEPLOY_HOOK_URL" ]; then
-            echo "Секрет DEPLOY_HOOK_URL не задан: деплой пропущен."
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "Секрет RENDER_DEPLOY_HOOK_URL не задан: деплой бэкенда пропущен."
             exit 0
           fi
-          curl -fsS -X POST "$DEPLOY_HOOK_URL"
-          echo "Деплой запущен."
+          curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL"
+          echo "Деплой бэкенда запущен."
+
+      - name: Фронтенд (Netlify)
+        env:
+          NETLIFY_BUILD_HOOK_URL: ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
+        run: |
+          if [ -z "$NETLIFY_BUILD_HOOK_URL" ]; then
+            echo "Секрет NETLIFY_BUILD_HOOK_URL не задан: деплой фронтенда пропущен."
+            exit 0
+          fi
+          curl -fsS -X POST "$NETLIFY_BUILD_HOOK_URL"
+          echo "Деплой фронтенда запущен."

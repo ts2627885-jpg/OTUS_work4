@@ -1,0 +1,36 @@
+# Render Blueprint: бэкенд (Express + TypeScript) как веб-сервис.
+# Автодеплой выключен: выкладку запускает GitHub Actions (.github/workflows/deploy.yml)
+# после успешного CI, через deploy hook этого сервиса (секрет RENDER_DEPLOY_HOOK_URL).
+# Секреты и параметры БД задаются в панели Render (Environment), здесь только имена.
+services:
+  - type: web
+    name: azs-pult-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: false
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: NODE_ENV
+        value: production
+      - key: DB_CONNECT_TIMEOUT
+        value: "20000"
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: LOG_LEVEL
+        value: info
