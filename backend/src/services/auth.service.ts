@@ -22,8 +22,7 @@ import {
 import {
   AuthenticationError,
   ConflictError,
-  NotFoundError,
-  ValidationError
+  NotFoundError
 } from '@utils/errors';
 import { logger } from '@utils/logger';
 

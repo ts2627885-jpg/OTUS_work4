@@ -18,6 +18,8 @@ import { bindUserContext } from '@config/request-context';
  * Extend Express Request type to include user property
  */
 declare global {
+  // Расширение типов Express требует пространство имён (declaration merging)
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       user?: {

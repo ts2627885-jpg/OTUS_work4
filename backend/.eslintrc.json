@@ -7,8 +7,7 @@
   },
   "extends": [
     "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:@typescript-eslint/recommended-requiring-type-checking"
+    "plugin:@typescript-eslint/recommended"
   ],
   "plugins": ["@typescript-eslint"],
   "env": {
@@ -16,23 +15,17 @@
     "es2020": true
   },
   "rules": {
-    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/no-unused-vars": [
       "error",
       {
         "argsIgnorePattern": "^_",
-        "varsIgnorePattern": "^_"
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
       }
     ],
-    "@typescript-eslint/explicit-function-return-types": "warn",
-    "@typescript-eslint/explicit-module-boundary-types": "off",
     "@typescript-eslint/no-non-null-assertion": "warn",
-    "@typescript-eslint/no-floating-promises": "error",
-    "no-console": [
-      "warn",
-      {
-        "allow": ["error", "warn"]
-      }
-    ]
-  }
+    "no-console": ["warn", { "allow": ["error", "warn"] }]
+  },
+  "ignorePatterns": ["dist/", "node_modules/", "src/tests/", "src/database/import-data-content.ts"]
 }

@@ -246,11 +246,6 @@ export async function computeRules(override?: { elasticityDays?: number }) {
 
       // Эластичность: ln(объём) от ln(цены) по дням с продажами
       const pts = series.filter(r => r.price > 0 && r.vol > 0);
-      const reg = linreg(pts.map(r => Math.log(r.price)), pts.map(r => Math.log(r.vol)));
-      // Эластичность считаем только при заметном разбросе цен (ln-цены) и в разумных пределах (спрос падает с ценой)
-      const lnPrices = pts.map(r => Math.log(r.price));
-      const priceSpread = lnPrices.length ? Math.sqrt(mean(lnPrices.map(x => (x - (mean(lnPrices) as number)) ** 2)) as number) : 0;
-      const plausible = reg !== null && reg.slope < 0 && reg.slope > -10 && priceSpread >= 0.02;
       const own = stationEl.get(`${code}-${fuel}`) as Elasticity;
       const net = pooled.get(fuel) as Elasticity;
       const pe = own.reliable ? own : net;

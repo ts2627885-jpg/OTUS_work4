@@ -16,6 +16,9 @@ import {
 } from '@utils/errors';
 import { IUser } from '@models/User';
 
+// AuthService требует JWT_SECRET (без значения по умолчанию); для модульных тестов задаём тестовый ключ
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'unit-test-secret-key-0123456789abcdef';
+
 /**
  * Mock UserRepository
  */

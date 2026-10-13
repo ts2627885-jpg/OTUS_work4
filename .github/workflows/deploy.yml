@@ -1,0 +1,30 @@
+# Автоматический деплой: после успешного CI на ветке main.
+# Хостинг (Railway, Render, Vercel, Netlify и др.) выбирается отдельно: у большинства есть
+# «deploy hook» — URL, при POST на который платформа пересобирает и выкладывает приложение.
+# Адрес хука хранится в секрете репозитория DEPLOY_HOOK_URL
+# (Settings → Secrets and variables → Actions). Пока секрета нет, шаг пропускается.
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Деплой на хостинг
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Вызов deploy hook
+        env:
+          DEPLOY_HOOK_URL: ${{ secrets.DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$DEPLOY_HOOK_URL" ]; then
+            echo "Секрет DEPLOY_HOOK_URL не задан: деплой пропущен."
+            exit 0
+          fi
+          curl -fsS -X POST "$DEPLOY_HOOK_URL"
+          echo "Деплой запущен."

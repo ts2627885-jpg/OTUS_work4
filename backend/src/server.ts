@@ -47,7 +47,6 @@ import { UserRepository } from '@repositories/user.repository';
 import { AuthController } from '@controllers/auth.controller';
 
 // Import mock data
-import { MOCK_AZS, MOCK_PRICES, MOCK_RECOMMENDATIONS } from '@/mocks/data';
 
 // Import utilities
 import { logger } from '@utils/logger';

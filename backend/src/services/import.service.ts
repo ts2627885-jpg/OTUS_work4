@@ -91,7 +91,6 @@ const stCode = (s?: string | null): string | null => {
   return m ? m[1] : null;
 };
 
-const pad2 = (n: number) => String(n).padStart(2, '0');
 
 function isoWeek(d: Date): number {
   const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
@@ -276,7 +275,7 @@ async function importWeather(client: PoolClient, records: Record<string, string>
 /** Цены конкурентов: записи идут по позициям, как в load_competitor_prices.py */
 async function importCompetitors(client: PoolClient, buffer: Buffer, res: ImportResult) {
   const stations = await knownStations(client);
-  const text = buffer.toString('utf8').replace(/^﻿/, '');
+  const text = buffer.toString('utf8').replace(/^\uFEFF/, '');
   const delim = ';';
   const rows = parseCsv(text, delim).slice(1);
   res.rows = rows.length;
@@ -338,7 +337,7 @@ async function importCompetitors(client: PoolClient, buffer: Buffer, res: Import
 
 async function importShop(client: PoolClient, buffer: Buffer, res: ImportResult) {
   const stations = await knownStations(client);
-  const text = buffer.toString('utf8').replace(/^﻿/, '');
+  const text = buffer.toString('utf8').replace(/^\uFEFF/, '');
   const [headers, ...body] = parseCsv(text, ';');
   const hs = headers.map(h => h.trim());
   const dateCols = hs.map((h, i) => ({ h, i })).filter(x => /^\d{2}\.\d{2}\.\d{4}$/.test(x.h));

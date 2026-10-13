@@ -10,7 +10,7 @@
 import { Request, Response } from 'express';
 import { AuthService } from '@services/auth.service';
 import { validate, authValidators } from '@utils/validators';
-import { ILoginRequest, IRegisterRequest, ILoginResponse } from '@models/User';
+import { ILoginRequest, IRegisterRequest } from '@models/User';
 import { logger } from '@utils/logger';
 
 export class AuthController {
@@ -21,26 +21,21 @@ export class AuthController {
    * Login user with username and password
    */
   async login(req: Request, res: Response): Promise<void> {
-    try {
-      const validated = await validate<ILoginRequest>(req.body, authValidators.login);
+    const validated = await validate<ILoginRequest>(req.body, authValidators.login);
 
-      logger.auth('Login attempt', { username: validated.username });
+    logger.auth('Login attempt', { username: validated.username });
 
-      const result = await this.authService.login(
-        validated.username,
-        validated.password
-      );
+    const result = await this.authService.login(
+      validated.username,
+      validated.password
+    );
 
-      logger.info(`User logged in: ${result.user.id}`, 'AuthController');
+    logger.info(`User logged in: ${result.user.id}`, 'AuthController');
 
-      res.status(200).json({
-        success: true,
-        data: result
-      });
-    } catch (error) {
-      // Errors are caught by global errorHandler middleware
-      throw error;
-    }
+    res.status(200).json({
+      success: true,
+      data: result
+    });
   }
 
   /**
@@ -48,22 +43,18 @@ export class AuthController {
    * Register new user
    */
   async register(req: Request, res: Response): Promise<void> {
-    try {
-      const validated = await validate<IRegisterRequest>(req.body, authValidators.register);
+    const validated = await validate<IRegisterRequest>(req.body, authValidators.register);
 
-      logger.auth('Registration attempt', { username: validated.username, email: validated.email });
+    logger.auth('Registration attempt', { username: validated.username, email: validated.email });
 
-      const result = await this.authService.register(validated);
+    const result = await this.authService.register(validated);
 
-      logger.info(`User registered: ${result.user.id}`, 'AuthController');
+    logger.info(`User registered: ${result.user.id}`, 'AuthController');
 
-      res.status(201).json({
-        success: true,
-        data: result
-      });
-    } catch (error) {
-      throw error;
-    }
+    res.status(201).json({
+      success: true,
+      data: result
+    });
   }
 
   /**
@@ -72,26 +63,22 @@ export class AuthController {
    * Note: JWT tokens are stateless, logout is primarily a client-side operation
    */
   async logout(req: Request, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.id;
+    const userId = req.user?.id;
 
-      if (!userId) {
-        res.status(401).json({
-          success: false,
-          error: 'Not authenticated'
-        });
-        return;
-      }
-
-      logger.auth('Logout', { userId });
-
-      res.status(200).json({
-        success: true,
-        message: 'Logged out successfully'
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: 'Not authenticated'
       });
-    } catch (error) {
-      throw error;
+      return;
     }
+
+    logger.auth('Logout', { userId });
+
+    res.status(200).json({
+      success: true,
+      message: 'Logged out successfully'
+    });
   }
 
   /**
@@ -100,26 +87,22 @@ export class AuthController {
    * Requires authentication
    */
   async getProfile(req: Request, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.id;
+    const userId = req.user?.id;
 
-      if (!userId) {
-        res.status(401).json({
-          success: false,
-          error: 'Not authenticated'
-        });
-        return;
-      }
-
-      const user = await this.authService.getUserProfile(userId);
-
-      res.status(200).json({
-        success: true,
-        data: user
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: 'Not authenticated'
       });
-    } catch (error) {
-      throw error;
+      return;
     }
+
+    const user = await this.authService.getUserProfile(userId);
+
+    res.status(200).json({
+      success: true,
+      data: user
+    });
   }
 
   /**
@@ -128,25 +111,21 @@ export class AuthController {
    * Requires valid refresh token
    */
   async refreshToken(req: Request, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.id;
+    const userId = req.user?.id;
 
-      if (!userId) {
-        res.status(401).json({
-          success: false,
-          error: 'Not authenticated'
-        });
-        return;
-      }
-
-      const newToken = await this.authService.refreshToken(userId);
-
-      res.status(200).json({
-        success: true,
-        data: newToken
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: 'Not authenticated'
       });
-    } catch (error) {
-      throw error;
+      return;
     }
+
+    const newToken = await this.authService.refreshToken(userId);
+
+    res.status(200).json({
+      success: true,
+      data: newToken
+    });
   }
 }
