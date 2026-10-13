@@ -56,12 +56,11 @@
 
 <script setup>
 import SidebarIcon from '@/components/layout/SidebarIcon.vue'
-import { ref, onMounted } from 'vue'
-import client from '@/api/client'
+import { onMounted } from 'vue'
+import { useImport } from '@/composables/useImport'
 
-const summary = ref(null)
-const loading = ref(true)
-const error = ref('')
+const { summary, summaryLoading: loading, summaryError: error, loadSummary } = useImport()
+loading.value = true // до первой загрузки показываем состояние «загрузка»
 
 const typeLabel = {
   prices: 'Цены и продажи топлива', traffic: 'Трафик', weather: 'Погода',
@@ -70,16 +69,7 @@ const typeLabel = {
 
 const fmt = (d) => (d ? new Date(d).toLocaleString('ru-RU') : '—')
 
-onMounted(async () => {
-  try {
-    const { data } = await client.get('/import/summary')
-    summary.value = data.data
-  } catch (e) {
-    error.value = e.response?.data?.error || e.message
-  } finally {
-    loading.value = false
-  }
-})
+onMounted(() => loadSummary())
 </script>
 
 <style scoped>

@@ -25,11 +25,29 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ): void {
+  // Ошибки разбора тела запроса (express.json): некорректный JSON — это ошибка клиента, а не сервера
+  const httpStatus = (err as any).status ?? (err as any).statusCode;
+  const isBodyParseError = (err as any).type === 'entity.parse.failed' || (err as any).type === 'entity.too.large';
+  const isClientHttpError = !(err instanceof AppError) && typeof httpStatus === 'number' && httpStatus >= 400 && httpStatus < 500;
+
   // Extract error info
   const isAppError = err instanceof AppError;
-  const statusCode = isAppError ? err.statusCode : 500;
-  const message = isAppError ? err.message : 'Internal server error';
-  const code = isAppError ? err.code : 'INTERNAL_ERROR';
+  let statusCode = 500;
+  let message = 'Internal server error';
+  let code = 'INTERNAL_ERROR';
+  if (isAppError) {
+    statusCode = err.statusCode;
+    message = err.message;
+    code = err.code;
+  } else if (isBodyParseError) {
+    statusCode = 400;
+    message = 'Некорректный JSON в запросе';
+    code = 'BAD_REQUEST';
+  } else if (isClientHttpError) {
+    statusCode = httpStatus;
+    message = 'Некорректный запрос';
+    code = 'BAD_REQUEST';
+  }
 
   // Log error
   if (statusCode >= 500) {

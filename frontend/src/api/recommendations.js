@@ -1,33 +1,20 @@
 import client from './client'
 
+// Пути соответствуют backend/src/routes/recommendations.routes.ts и stations.routes.ts
 export const recommendationsAPI = {
-  // Get recommendations for AZS
-  getForAzs(azsId, filters = {}) {
-    return client.get(`/recommendations/azs/${azsId}`, { params: filters })
-  },
-
-  // Get all recommendations (admin view)
-  getAll(filters = {}) {
+  list(filters = {}) {
     return client.get('/recommendations', { params: filters })
   },
-
-  // Get single recommendation
-  getById(id) {
-    return client.get(`/recommendations/${id}`)
+  complete(id) {
+    return client.post(`/recommendations/${id}/complete`)
   },
-
-  // Mark recommendation as completed
-  markAsCompleted(id, data = {}) {
-    return client.post(`/recommendations/${id}/complete`, data)
+  generate() {
+    return client.post('/recommendations/generate')
   },
-
-  // Generate recommendations for AZS
-  generate(azsId) {
-    return client.post(`/recommendations/generate/${azsId}`)
+  stationCheck() {
+    return client.get('/stations/check')
   },
-
-  // Get recommendation analytics
-  getAnalytics(azsId, dateRange) {
-    return client.get(`/recommendations/analytics/${azsId}`, { params: dateRange })
-  }
+  rules() {
+    return client.get('/analysis/rules')
+  },
 }

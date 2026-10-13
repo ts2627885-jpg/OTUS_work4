@@ -37,8 +37,12 @@ client.interceptors.response.use(
     const authStore = useAuthStore()
     const originalRequest = error.config
 
-    // If 401 and not a retry, logout user
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // 401 на запросах входа и регистрации — это неверные данные, а не истёкшая сессия:
+    // перезагружать страницу нельзя, иначе пользователь не увидит текст ошибки
+    const isAuthRequest = /\/auth\/(login|register)$/.test(originalRequest?.url || '')
+
+    // Истёкшая сессия: выходим и уводим на страницу входа (один раз)
+    if (error.response?.status === 401 && !isAuthRequest && !originalRequest._retry) {
       originalRequest._retry = true
       authStore.logout()
       window.location.href = '/login'

@@ -121,8 +121,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import client from '@/api/client'
 import { azsAPI } from '@/api/azs'
+import { analyticsAPI } from '@/api/analytics'
+import { useRequest, useMutation } from '@/composables/useRequest'
 import { useAuthStore } from '@/stores/auth'
 import SeriesChart from '@/components/charts/SeriesChart.vue'
 
@@ -136,9 +137,46 @@ const sales = ref([])
 const traffic = ref([])
 const weather = ref([])
 const competitors = ref([])
-const loading = ref(true)
-const error = ref('')
 const competitorChart = ref(null)
+
+// Карточка станции: сама станция и все её данные одним запросом-хуком
+const detailState = useRequest(async (id) => {
+  let st
+  try {
+    st = await azsAPI.getById(id)
+  } catch (e) {
+    if (e.response?.status === 404) {
+      // ошибка с ответом, чтобы errorMessage показал её как ответ сервера, а не как обрыв сети
+      const notFound = new Error('Станция не найдена')
+      notFound.response = { status: 404, data: { error: 'Станция не найдена' } }
+      throw notFound
+    }
+    throw e
+  }
+  const [pr, sa, tr, we, co, an] = await Promise.all([
+    analyticsAPI.pricesList(),
+    azsAPI.getSales(id, { days: 30 }),
+    azsAPI.getTraffic(id, { days: 14 }),
+    azsAPI.getWeather(id, { days: 14 }),
+    azsAPI.getCompetitors(id),
+    // график цен конкурентов за 120 дней по этой станции
+    analyticsAPI.tab('competitors', { azsId: id })
+  ])
+  return {
+    station: st.data.data,
+    prices: pr.data.data.filter(p => p.azsId === id),
+    sales: sa.data.data,
+    traffic: tr.data.data,
+    weather: we.data.data,
+    competitors: co.data.data,
+    competitorChart: an.data.data.sections[0]?.chart ?? null
+  }
+}, null)
+const loading = detailState.loading
+const error = detailState.error
+loading.value = true // до первой загрузки показываем состояние «загрузка»
+
+const saveState = useMutation((id, body) => azsAPI.update(id, body).then(r => r.data.data))
 
 /** Серии по датам: продажи по видам топлива, трафик — легковые и грузовые */
 const seriesByDate = (rows, field, key) => {
@@ -160,8 +198,8 @@ const trafficChart = computed(() => {
 })
 
 const editing = ref(false)
-const saving = ref(false)
-const saveError = ref('')
+const saving = saveState.loading
+const saveError = saveState.error
 const draft = ref({})
 const fuelInput = ref('')
 
@@ -174,47 +212,34 @@ const startEdit = () => {
   editing.value = true
 }
 
+// Сохранение: ошибка остаётся в saveError, карточка перечитывается после успеха
 const save = async () => {
-  saving.value = true
-  saveError.value = ''
+  const fuelTypes = fuelInput.value.split(',').map(s => s.trim()).filter(Boolean)
   try {
-    const fuelTypes = fuelInput.value.split(',').map(s => s.trim()).filter(Boolean)
-    const { data } = await azsAPI.update(station.value.id, { ...draft.value, fuelTypes })
-    station.value = data.data
-    editing.value = false
-  } catch (e) {
-    saveError.value = e.response?.data?.error || e.message
-  } finally {
-    saving.value = false
+    // сервер возвращает обновлённую станцию — показываем её сразу
+    station.value = await saveState.run(station.value.id, { ...draft.value, fuelTypes })
+  } catch {
+    return
   }
+  editing.value = false
 }
 
-onMounted(async () => {
-  const id = route.params.id
-  try {
-    const st = await azsAPI.getById(id)
-    station.value = st.data.data
-    const [pr, sa, tr, we, co] = await Promise.all([
-      client.get('/prices'),
-      azsAPI.getSales(id, { days: 30 }),
-      azsAPI.getTraffic(id, { days: 14 }),
-      azsAPI.getWeather(id, { days: 14 }),
-      azsAPI.getCompetitors(id)
-    ])
-    prices.value = pr.data.data.filter(p => p.azsId === id)
-    sales.value = sa.data.data
-    traffic.value = tr.data.data
-    weather.value = we.data.data
-    competitors.value = co.data.data
-    // график цен конкурентов за 120 дней по этой станции
-    const an = await client.get('/analytics/competitors', { params: { azsId: id } })
-    competitorChart.value = an.data.data.sections[0]?.chart ?? null
-  } catch (e) {
-    error.value = e.response?.status === 404 ? 'Станция не найдена' : (e.response?.data?.error || e.message)
-  } finally {
-    loading.value = false
-  }
-})
+const applyDetail = (d) => {
+  if (!d) return
+  station.value = d.station
+  prices.value = d.prices
+  sales.value = d.sales
+  traffic.value = d.traffic
+  weather.value = d.weather
+  competitors.value = d.competitors
+  competitorChart.value = d.competitorChart
+}
+
+const loadDetail = async () => {
+  applyDetail(await detailState.run(route.params.id))
+}
+
+onMounted(() => loadDetail())
 </script>
 
 <style scoped>

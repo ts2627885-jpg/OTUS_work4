@@ -1,74 +1,20 @@
 import client from './client'
 
+// Пути соответствуют backend/src/routes/admin.routes.ts (все — только для admin)
 export const adminAPI = {
-  // Users management
-  users: {
-    getAll(filters = {}) {
-      return client.get('/admin/users', { params: filters })
-    },
-    getById(id) {
-      return client.get(`/admin/users/${id}`)
-    },
-    create(data) {
-      return client.post('/admin/users', data)
-    },
-    update(id, data) {
-      return client.put(`/admin/users/${id}`, data)
-    },
-    delete(id) {
-      return client.delete(`/admin/users/${id}`)
-    }
-  },
-
-  // Roles management
-  roles: {
-    getAll() {
-      return client.get('/admin/roles')
-    },
-    getById(id) {
-      return client.get(`/admin/roles/${id}`)
-    },
-    create(data) {
-      return client.post('/admin/roles', data)
-    },
-    update(id, data) {
-      return client.put(`/admin/roles/${id}`, data)
-    },
-    delete(id) {
-      return client.delete(`/admin/roles/${id}`)
-    }
-  },
-
-  // Permissions management
-  permissions: {
-    getAll() {
-      return client.get('/admin/permissions')
-    },
-    assignToRole(roleId, permissions) {
-      return client.post(`/admin/roles/${roleId}/permissions`, { permissions })
-    }
-  },
-
-  // System logs
-  logs: {
-    getLoginLogs(filters = {}) {
-      return client.get('/admin/logs/login', { params: filters })
-    },
-    getAuditLogs(filters = {}) {
-      return client.get('/admin/logs/audit', { params: filters })
-    }
-  },
-
-  // Statistics
-  stats: {
-    getOverall() {
-      return client.get('/admin/stats/overall')
-    },
-    getUserStats() {
-      return client.get('/admin/stats/users')
-    },
-    getAzsStats() {
-      return client.get('/admin/stats/azs')
-    }
-  }
+  users() { return client.get('/admin/users') },
+  createUser(data) { return client.post('/admin/users', data) },
+  updateUser(id, data) { return client.put(`/admin/users/${id}`, data) },
+  deleteUser(id) { return client.delete(`/admin/users/${id}`) },
+  userStations(id) { return client.get(`/admin/users/${id}/azs`) },
+  setUserStations(id, azsIds) { return client.put(`/admin/users/${id}/azs`, { azsIds }) },
+  priceTest() { return client.get('/admin/price-test') },
+  createPriceTestDraft() { return client.post('/admin/price-test/draft') },
+  settings() { return client.get('/admin/settings') },
+  settingsHistory() { return client.get('/admin/settings/history') },
+  saveSettings(data) { return client.put('/admin/settings', data) },
+  exportSettings() { return client.get('/admin/settings/export', { responseType: 'blob' }) },
+  importSettings(data) { return client.post('/admin/settings/import', data) },
+  overallStats() { return client.get('/admin/stats/overall') },
+  logs(kind, params) { return client.get(kind === 'login' ? '/admin/logs/login' : '/admin/logs/audit', { params }) },
 }

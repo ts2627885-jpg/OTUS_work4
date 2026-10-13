@@ -159,7 +159,10 @@
 <script setup>
 import SidebarIcon from '@/components/layout/SidebarIcon.vue'
 import { ref, computed, onMounted } from 'vue'
-import client from '@/api/client'
+import { dashboardAPI } from '@/api/dashboard'
+import { azsAPI } from '@/api/azs'
+import { adminAPI } from '@/api/admin'
+import { useRequest } from '@/composables/useRequest'
 import StateMessage from '@/components/common/StateMessage.vue'
 import HintIcon from '@/components/common/HintIcon.vue'
 
@@ -169,10 +172,10 @@ const day = ref('')
 const maxDay = ref('')
 const stationId = ref('')
 const stationOptions = ref([])
-const data = ref(null)
+const dashboard = useRequest((params) => dashboardAPI.get(params).then(r => r.data.data))
+const { data, loading, error } = dashboard
+loading.value = true // до первой загрузки показываем состояние «загрузка»
 const stats = ref({})
-const loading = ref(true)
-const error = ref('')
 
 const allStations = computed(() => data.value?.stations || [])
 const visibleStations = computed(() => allStations.value.filter(r => !stationId.value || r.id === stationId.value))
@@ -226,31 +229,23 @@ const gaugeX = (v) => (v === null || v === undefined ? 50 : 50 + Math.max(-1, Ma
 const gaugeTitle = (v) => (v === null || v === undefined ? 'нет данных' : v < 0 ? `дешевле конкурентов на ${Math.abs(v).toFixed(2)} ₽` : `дороже конкурентов на ${v.toFixed(2)} ₽`)
 
 const load = async () => {
-  loading.value = true
-  error.value = ''
-  try {
-    const params = { days: days.value }
-    if (day.value) params.date = day.value
-    const { data: res } = await client.get('/dashboard', { params })
-    data.value = res.data
-    if (!maxDay.value) maxDay.value = res.data.asOfDate
-    if (!day.value) day.value = res.data.asOfDate
-  } catch (e) {
-    error.value = e.response?.data?.error || e.message
-  } finally {
-    loading.value = false
-  }
+  const params = { days: days.value }
+  if (day.value) params.date = day.value
+  const res = await dashboard.run(params)
+  if (!res) return
+  if (!maxDay.value) maxDay.value = res.asOfDate
+  if (!day.value) day.value = res.asOfDate
 }
 
 onMounted(async () => {
   try {
-    const { data: list } = await client.get('/azs')
+    const { data: list } = await azsAPI.getAll()
     stationOptions.value = list.data
   } catch {
     stationOptions.value = []
   }
   try {
-    const { data: st } = await client.get('/admin/stats/overall')
+    const { data: st } = await adminAPI.overallStats()
     stats.value = st.data
   } catch {
     stats.value = {}

@@ -44,6 +44,13 @@ export function pruneLogFiles(): number {
 class Logger {
   private isDevelopment = process.env.NODE_ENV === 'development';
 
+  /** Дополнительный приёмник записей warn и error (например, таблица app_logs в базе) */
+  private sink: ((entry: LogEntry) => void) | null = null;
+
+  setSink(fn: ((entry: LogEntry) => void) | null): void {
+    this.sink = fn;
+  }
+
   /**
    * Format and output log entry
    */
@@ -68,6 +75,14 @@ class Logger {
     }
 
     this.writeFile(entry);
+
+    if (this.sink && (level === 'warn' || level === 'error')) {
+      try {
+        this.sink(entry);
+      } catch {
+        // журнал не должен ломать работу приложения
+      }
+    }
 
     if (this.isDevelopment) {
       // Development: pretty print

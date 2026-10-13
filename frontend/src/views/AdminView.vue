@@ -194,9 +194,10 @@
 </template>
 
 <script setup>
+import { errorMessage } from '@/composables/useRequest'
 import SidebarIcon from '@/components/layout/SidebarIcon.vue'
 import { ref, computed, onMounted } from 'vue'
-import client from '@/api/client'
+import { adminAPI } from '@/api/admin'
 import { azsAPI } from '@/api/azs'
 import { useAuthStore } from '@/stores/auth'
 
@@ -248,7 +249,7 @@ const filteredPlan = computed(() => planRows.value.filter(r =>
   (!planStation.value || r.station_code === planStation.value) && (!planFuel.value || r.fuel_code === planFuel.value)))
 
 const loadPriceTest = async () => {
-  const { data } = await client.get('/admin/price-test')
+  const { data } = await adminAPI.priceTest()
   planRows.value = data.data
 }
 
@@ -258,12 +259,12 @@ const openPriceTest = async () => {
   try {
     await loadPriceTest()
   } catch (e) {
-    error.value = e.response?.data?.error || e.message
+    error.value = errorMessage(e)
   }
 }
 
 const createDraft = () => run(async () => {
-  const { data } = await client.post('/admin/price-test/draft')
+  const { data } = await adminAPI.createPriceTestDraft()
   planInfo.value = data.data
   await loadPriceTest()
 }, 'Черновик плана создан (цены на станциях не изменены)')
@@ -284,7 +285,7 @@ const describeChange = (raw) => {
 }
 
 const loadSettings = async () => {
-  const [st, hist] = await Promise.all([client.get('/admin/settings'), client.get('/admin/settings/history')])
+  const [st, hist] = await Promise.all([adminAPI.settings(), adminAPI.settingsHistory()])
   settingsForm.value = { ...st.data.data.values }
   settingsDefaults.value = st.data.data.defaults
   settingsHistory.value = hist.data.data
@@ -297,22 +298,22 @@ const openSettings = async () => {
   try {
     await loadSettings()
   } catch (e) {
-    error.value = e.response?.data?.error || e.message
+    error.value = errorMessage(e)
   }
 }
 
 const saveSettings = () => run(async () => {
-  await client.put('/admin/settings', settingsForm.value)
+  await adminAPI.saveSettings(settingsForm.value)
   await loadSettings()
 }, 'Настройки сохранены')
 
 const resetSettings = () => run(async () => {
-  await client.put('/admin/settings', settingsDefaults.value)
+  await adminAPI.saveSettings(settingsDefaults.value)
   await loadSettings()
 }, 'Возвращены значения по умолчанию')
 
 const exportSettings = async () => {
-  const { data } = await client.get('/admin/settings/export', { responseType: 'blob' })
+  const { data } = await adminAPI.exportSettings()
   const url = URL.createObjectURL(data)
   const a = document.createElement('a')
   a.href = url
@@ -327,7 +328,7 @@ const importSettings = async (e) => {
   if (!file) return
   await run(async () => {
     const parsed = JSON.parse(await file.text())
-    await client.post('/admin/settings/import', parsed)
+    await adminAPI.importSettings(parsed)
     await loadSettings()
   }, 'Настройки загружены из файла')
 }
@@ -342,49 +343,49 @@ const run = async (fn, okText) => {
     await fn()
     if (okText) message.value = okText
   } catch (e) {
-    error.value = e.response?.data?.error || e.message
+    error.value = errorMessage(e)
   } finally {
     busy.value = false
   }
 }
 
 const loadUsers = async () => {
-  const { data } = await client.get('/admin/users')
+  const { data } = await adminAPI.users()
   users.value = data.data
 }
 
 const createUser = () => run(async () => {
-  await client.post('/admin/users', form.value)
+  await adminAPI.createUser(form.value)
   form.value = { username: '', email: '', password: '', role: 'viewer' }
   await loadUsers()
 }, 'Пользователь создан')
 
 const setRole = (u, role) => run(async () => {
-  await client.put(`/admin/users/${u.id}`, { role })
+  await adminAPI.updateUser(u.id, { role })
   await loadUsers()
 }, 'Роль изменена')
 
 const setActive = (u, is_active) => run(async () => {
-  await client.put(`/admin/users/${u.id}`, { is_active })
+  await adminAPI.updateUser(u.id, { is_active })
   await loadUsers()
 }, 'Статус изменён')
 
 const removeUser = (u) => {
   if (!confirm(`Удалить пользователя «${u.username}»? Это действие необратимо.`)) return
   run(async () => {
-    await client.delete(`/admin/users/${u.id}`)
+    await adminAPI.deleteUser(u.id)
     await loadUsers()
   }, 'Пользователь удалён')
 }
 
 const openAssign = async (u) => {
   assigning.value = u
-  const { data } = await client.get(`/admin/users/${u.id}/azs`)
+  const { data } = await adminAPI.userStations(u.id)
   selected.value = data.data
 }
 
 const saveAssign = () => run(async () => {
-  await client.put(`/admin/users/${assigning.value.id}/azs`, { azsIds: selected.value })
+  await adminAPI.setUserStations(assigning.value.id, selected.value)
   assigning.value = null
   await loadUsers()
 }, 'Назначения сохранены')
@@ -393,10 +394,10 @@ const openLogs = async (kind) => {
   section.value = kind
   logsLoading.value = true
   try {
-    const { data } = await client.get(kind === 'login' ? '/admin/logs/login' : '/admin/logs/audit', { params: { limit: 200 } })
+    const { data } = await adminAPI.logs(kind, { limit: 200 })
     logs.value = data.data
   } catch (e) {
-    error.value = e.response?.data?.error || e.message
+    error.value = errorMessage(e)
   } finally {
     logsLoading.value = false
   }
@@ -407,7 +408,7 @@ onMounted(async () => {
     const [, st] = await Promise.all([loadUsers(), azsAPI.getAll()])
     stations.value = st.data.data
   } catch (e) {
-    error.value = e.response?.data?.error || e.message
+    error.value = errorMessage(e)
   } finally {
     loading.value = false
   }

@@ -72,13 +72,13 @@
 <script setup>
 import SidebarIcon from '@/components/layout/SidebarIcon.vue'
 import { ref, computed, onMounted } from 'vue'
-import client from '@/api/client'
+import { useImport } from '@/composables/useImport'
 
 const files = ref([])
-const busy = ref(false)
-const error = ref('')
+const { history, loadHistory, upload: sendFiles, uploadState } = useImport()
+const busy = uploadState.loading
+const error = uploadState.error
 const result = ref(null)
-const history = ref([])
 
 const okCount = computed(() => (result.value?.files || []).filter(r => r.ok).length)
 
@@ -98,30 +98,16 @@ const onPick = (e) => {
   result.value = null
 }
 
-const loadHistory = async () => {
-  const { data } = await client.get('/import/history')
-  history.value = data.data
-}
-
 const upload = async () => {
-  busy.value = true
-  error.value = ''
   try {
-    const fd = new FormData()
-    for (const f of files.value) fd.append('file', f)
-    const { data } = await client.post('/import/csv', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
-    result.value = data.data
+    result.value = await sendFiles(files.value)
     files.value = []
-    await loadHistory()
-  } catch (e) {
-    error.value = e.response?.data?.error || e.message
-    await loadHistory().catch(() => {})
-  } finally {
-    busy.value = false
+  } catch {
+    // текст ошибки уже в error (состояние отправки)
   }
 }
 
-onMounted(() => loadHistory().catch(() => {}))
+onMounted(() => loadHistory())
 </script>
 
 <style scoped>

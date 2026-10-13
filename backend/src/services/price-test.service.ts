@@ -70,8 +70,11 @@ export async function buildDraftPlan(userId: string | null, seed = 42) {
     await client.query(`DELETE FROM price_test_plan WHERE status = 'draft'`);
     for (const r of plan) {
       await client.query(
-        `INSERT INTO price_test_plan (station_code, fuel_code, block_no, start_date, end_date, base_price, offset_rub, target_price, created_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        // azs_id — станция приложения по коду аналитики: по нему RLS ограничивает видимость для manager
+        `INSERT INTO price_test_plan (station_code, azs_id, fuel_code, block_no, start_date, end_date, base_price, offset_rub, target_price, created_by)
+         VALUES ($1,
+                 (SELECT a.id FROM public.azs a JOIN azs.station s ON s.station_name = a.name WHERE s.station_code = $1 LIMIT 1),
+                 $2, $3, $4, $5, $6, $7, $8, $9)`,
         [r.station_code, r.fuel_code, r.block_no, r.start, r.end, r.base, r.offset, r.target, userId]
       );
     }

@@ -22,6 +22,6 @@ export const authAPI = {
   },
 
   getProfile() {
-    return client.get('/protected')
+    return client.get('/auth/profile')
   }
 }

@@ -12,6 +12,8 @@ import { getPool } from '@config/database';
 import { logger } from '@utils/logger';
 import { createBackup } from '@services/backup.service';
 import { generateRecommendations, GenerateResult } from '@services/recommendations.service';
+import { clearRulesCache } from '@services/rules.service';
+import { clearElasticityCache } from '@services/elasticity.service';
 
 export type ImportType = 'stations' | 'prices' | 'traffic' | 'weather' | 'competitors' | 'shop' | 'promotions';
 
@@ -427,6 +429,9 @@ export async function importCsv(fileName: string, buffer: Buffer, userId: string
     fileName, type, userId, backupFile, rows: res.rows, written: res.written, skipped: res.skipped,
     unknownStations: res.unknownStations, tables: res.tables, durationMs: Date.now() - started
   });
+  // Данные изменились: кэши расчётов больше не верны
+  clearRulesCache();
+  clearElasticityCache();
   // Данные записаны и зафиксированы; ошибка пересчёта не отменяет импорт.
   // При загрузке пакета файлов пересчёт делает маршрут один раз в конце (recalc: false)
   if (opts.recalc !== false) {

@@ -12,6 +12,7 @@ import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '@services/auth.service';
 import { AuthenticationError } from '@utils/errors';
 import { logger } from '@utils/logger';
+import { bindUserContext } from '@config/request-context';
 
 /**
  * Extend Express Request type to include user property
@@ -37,7 +38,7 @@ declare global {
  * Authorization: Bearer <token>
  */
 export function createAuthMiddleware(authService: AuthService) {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       // Extract token from Authorization header
       const authHeader = req.get('Authorization');
@@ -66,6 +67,9 @@ export function createAuthMiddleware(authService: AuthService) {
         email: payload.email,
         role_id: payload.role_id
       };
+
+      // Роль пользователя для RLS: политики в базе увидят app.role и app.user_id этого запроса
+      await bindUserContext(payload.id);
 
       logger.debug(`User authenticated: ${payload.id}`, 'AuthMiddleware');
 

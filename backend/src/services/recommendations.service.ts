@@ -3,7 +3,7 @@
  * Вызывается из POST /api/recommendations/generate и в конце импорта CSV.
  */
 import { getPool } from '@config/database';
-import { computeRules } from '@services/rules.service';
+import { computeRulesCached } from '@services/rules.service';
 
 export interface GenerateResult {
   asOfDate: string;
@@ -13,7 +13,8 @@ export interface GenerateResult {
 
 /** Пересчитывает правила, обновляет активные рекомендации и закрывает устаревшие */
 export async function generateRecommendations(): Promise<GenerateResult> {
-  const analysis = await computeRules();
+  // Через кэш: пересчёт рекомендаций после импорта заполняет кэш, и первый запрос правил уже быстрый
+  const analysis = await computeRulesCached();
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');

@@ -21,18 +21,26 @@ export function createBackup(reason: string, schema?: string): Promise<string> {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   const safeReason = reason.replace(/[^a-zA-Z0-9_-]/g, '_');
   const file = path.join(dir, `${dbName}${schema ? '_' + schema : ''}_${stamp}_${safeReason}.dump`);
+  // Копию делаем от роли, которая обходит RLS: роль приложения видит по политикам только строки
+  // своих станций и без контекста пользователя вернула бы копию с пустыми таблицами.
+  const backupUser = process.env.BACKUP_DB_USER || process.env.DB_USER || 'postgres';
+  const backupPassword = process.env.BACKUP_DB_PASSWORD || process.env.DB_PASSWORD || '';
   const args = [
     '-h', process.env.DB_HOST || 'localhost',
     '-p', process.env.DB_PORT || '5432',
-    '-U', process.env.DB_USER || 'postgres',
+    '-U', backupUser,
     '-Fc', '-f', file,
-    ...(schema ? ['-n', schema] : []),
+    // Только данные приложения: схемы служб Supabase (auth, storage…) недоступны роли приложения
+    ...(schema ? ['-n', schema] : ['-n', 'public', '-n', 'azs']),
     dbName
   ];
-  const env = { ...process.env, PGPASSWORD: process.env.DB_PASSWORD || '' };
+  const env = { ...process.env, PGPASSWORD: backupPassword };
   return new Promise((resolve, reject) => {
-    execFile(process.env.PG_DUMP_PATH || 'pg_dump', args, { env }, (err, _out, stderr) => {
+    // Таймаут: удалённая база может зависнуть на соединении; тогда запрос не должен висеть бесконечно
+    execFile(process.env.PG_DUMP_PATH || 'pg_dump', args, { env, timeout: 5 * 60 * 1000 }, (err, _out, stderr) => {
       if (err) {
+        // Неполный файл не должен попасть в список резервных копий
+        if (fs.existsSync(file)) fs.unlinkSync(file);
         logger.error('Резервная копия не создана', err, 'BACKUP', { reason, stderr: String(stderr || '').slice(0, 500) });
         return reject(new Error('Не удалось создать резервную копию: ' + (stderr || err.message)));
       }

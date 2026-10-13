@@ -15,7 +15,8 @@ export interface PublicSyncResult {
 }
 
 // backend/src/services -> корень azs-pult-fullstack (то же и из dist/services)
-const SYNC_SQL = path.resolve(__dirname, '../../../_data/_BD/pipeline/sync_public.sql');
+// В контейнере файл лежит в другом месте: путь задаётся переменной SYNC_PUBLIC_SQL
+const SYNC_SQL = process.env.SYNC_PUBLIC_SQL || path.resolve(__dirname, '../../../_data/_BD/pipeline/sync_public.sql');
 
 async function appStationNames(): Promise<string[]> {
   const { rows } = await getPool().query(`SELECT name FROM public.azs ORDER BY name`);

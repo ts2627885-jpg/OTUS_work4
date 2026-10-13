@@ -57,7 +57,8 @@ describe('auth store', () => {
     await expect(store.login('admin', 'wrong')).rejects.toBeDefined()
 
     expect(store.isAuthenticated).toBe(false)
-    expect(store.error).toBe('Invalid credentials')
+    // 401 на входе показываем понятным текстом, а не серверным «Invalid credentials»
+    expect(store.error).toBe('Неверное имя пользователя или пароль.')
   })
 
   it('logout очищает состояние и хранилище', async () => {

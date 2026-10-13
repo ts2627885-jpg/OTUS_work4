@@ -11,8 +11,23 @@
  * Остальные правила перечислены с причиной, почему их нельзя посчитать.
  */
 import { getPool } from '@config/database';
+import { logger } from '@utils/logger';
 import { getRuleSettings } from '@services/settings.service';
-import { pooledElasticity, Elasticity } from '@services/elasticity.service';
+import { pooledElasticity, dataVersion, Elasticity } from '@services/elasticity.service';
+
+/** Обработка списка с ограничением параллельных запросов к базе */
+async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const out: R[] = new Array(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const i = next++;
+      out[i] = await fn(items[i]);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return out;
+}
 import { extraRules } from '@services/rules-extra.service';
 
 const FUELS = ['AI92', 'AI95', 'DT']; // топливо, которое есть и у нас, и у конкурентов
@@ -73,6 +88,59 @@ const dayDiff = (a: string, b: string) =>
   (Date.parse(a) - Date.parse(b)) / 86400000;
 
 const round = (v: number, d = 1) => Math.round(v * 10 ** d) / 10 ** d;
+
+// ---------- Кэш ответа расчёта правил ----------
+// Расчёт тяжёлый (выборки продаж, трафика, цен конкурентов). Ответ кэшируется по версии всех
+// таблиц, от которых он зависит, и по настройкам. Кэш сбрасывается после загрузки данных
+// и в любом случае устаревает через RULES_CACHE_TTL_MS.
+const RULES_CACHE_TTL_MS = 10 * 60 * 1000;
+const rulesCache = new Map<string, { version: string; at: number; value: any }>();
+
+/** Версия данных для правил: количество строк и последние даты/метки каждой таблицы */
+async function rulesDataVersion(): Promise<string> {
+  const { rows } = await getPool().query(`
+    SELECT
+      (SELECT max(sale_date)::text || '|' || count(*) FROM azs.fuel_daily) AS fuel,
+      (SELECT max(sale_date)::text || '|' || count(*) FROM azs.shop_sales_daily) AS shop,
+      (SELECT max(traffic_date)::text || '|' || count(*) FROM azs.traffic_daily) AS traffic,
+      (SELECT max(observed_at)::text || '|' || count(*) FROM azs.competitor_price) AS comp_price,
+      (SELECT count(*)::text FROM azs.competitor) AS comp,
+      (SELECT max(weather_date)::text || '|' || count(*) FROM azs.weather_daily) AS weather,
+      (SELECT count(*)::text FROM azs.promotion) AS promo,
+      (SELECT count(*)::text || '|' || coalesce(max(name), '') FROM public.azs) AS stations`);
+  return Object.values(rows[0]).join('#');
+}
+
+/** Ответ расчёта правил с кэшем (для маршрута /api/analysis/rules) */
+export async function computeRulesCached() {
+  const version = await rulesDataVersion();
+  const key = JSON.stringify(await getRuleSettings());
+  const hit = rulesCache.get(key);
+  if (hit && hit.version === version && Date.now() - hit.at < RULES_CACHE_TTL_MS) return hit.value;
+  const value = await computeRules();
+  rulesCache.set(key, { version, at: Date.now(), value });
+  return value;
+}
+
+/** Сброс кэша расчёта правил (после загрузки данных) */
+export function clearRulesCache(): void {
+  rulesCache.clear();
+}
+
+// Прогрев: расчёт в фоне, чтобы первый пользователь не ждал холодного расчёта.
+// Повторные запуски пока расчёт идёт не создают новых (параллельные импорты дают один прогрев).
+let warming: Promise<void> | null = null;
+// Пулер Supabase при старте иногда не отвечает: до трёх попыток с паузой
+export function warmRulesCache(attempt = 1): void {
+  if (warming) return;
+  warming = computeRulesCached()
+    .then(() => undefined)
+    .catch((e) => {
+      logger.warn('Прогрев кэша правил не выполнен', 'RULES', { attempt, error: String(e?.message || e) });
+      if (attempt < 3) setTimeout(() => warmRulesCache(attempt + 1), 15000).unref();
+    })
+    .finally(() => { warming = null; });
+}
 
 export async function computeRules(override?: { elasticityDays?: number }) {
   const pool = getPool();
@@ -135,12 +203,15 @@ export async function computeRules(override?: { elasticityDays?: number }) {
   const modelInfo: Record<string, { elasticity: number | null; se: number | null; n: number; r2: number | null; source: string | null; stationR2: number | null; networkR2: number | null; reason: string | null }> = {};
   // эластичность по всей сети (панель с контролями) — одна оценка на вид топлива
   // оценка по сети и по каждой станции; для станции берём её оценку, если она значима, иначе сетевую
+  // Версия данных одна на весь расчёт; оценки считаются параллельно, но не более 5 запросов сразу
+  const version = await dataVersion();
   const pooled = new Map<string, Elasticity>();
-  for (const f of FUELS) pooled.set(f, await pooledElasticity(f, S.elasticity_days, asOf));
+  const fuelEls = await mapLimit(FUELS, 5, (f) => pooledElasticity(f, S.elasticity_days, asOf, undefined, version));
+  FUELS.forEach((f, i) => pooled.set(f, fuelEls[i]));
   const stationEl = new Map<string, Elasticity>();
-  for (const st of stationList) for (const f of FUELS) {
-    stationEl.set(`${st.code}-${f}`, await pooledElasticity(f, S.elasticity_days, asOf, st.code as string));
-  }
+  const pairs = stationList.flatMap(st => FUELS.map(f => ({ st, f })));
+  const pairEls = await mapLimit(pairs, 5, ({ st, f }) => pooledElasticity(f, S.elasticity_days, asOf, st.code as string, version));
+  pairs.forEach(({ st, f }, i) => stationEl.set(`${st.code}-${f}`, pairEls[i]));
 
   // ---- по станциям и топливу ----
   // пары, где эластичность не значима: сводятся в одну рекомендацию PRICE-004 после цикла

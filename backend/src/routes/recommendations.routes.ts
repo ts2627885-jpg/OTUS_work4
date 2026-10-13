@@ -25,7 +25,7 @@ export function registerRecommendationRoutes(
            r.created_at, r.completed_at, a.id AS azs_id, a.name AS station, u.username AS completed_by
       FROM recommendations r
       LEFT JOIN public.azs a ON a.id = r.azs_id
-      LEFT JOIN users u ON u.id = r.completed_by`;
+      LEFT JOIN user_names u ON u.id = r.completed_by`;
 
   const mapRec = (r: any) => ({
     id: r.id,

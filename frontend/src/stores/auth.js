@@ -1,6 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authAPI } from '@/api/auth'
+import { errorMessage } from '@/composables/useRequest'
+
+// Ошибки входа и регистрации: неверные данные (401) показываем понятно, остальное — общим способом
+const authErrorMessage = (err, fallback) => (err.response?.status === 401 ? 'Неверное имя пользователя или пароль.' : errorMessage(err) || fallback)
 
 export const useAuthStore = defineStore('auth', () => {
   // State
@@ -42,7 +46,7 @@ export const useAuthStore = defineStore('auth', () => {
       return response.data
     } catch (err) {
       // backend отвечает { success: false, error: '...' }
-      error.value = err.response?.data?.error || err.response?.data?.message || 'Registration failed'
+      error.value = authErrorMessage(err, 'Не удалось зарегистрироваться.')
       throw err
     } finally {
       loading.value = false
@@ -63,7 +67,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       return response.data
     } catch (err) {
-      error.value = err.response?.data?.error || err.response?.data?.message || 'Login failed'
+      error.value = authErrorMessage(err, 'Не удалось войти.')
       throw err
     } finally {
       loading.value = false

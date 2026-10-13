@@ -131,7 +131,8 @@ const effectView = (e) => {
 }
 import SidebarIcon from '@/components/layout/SidebarIcon.vue'
 import { ref, computed, onMounted } from 'vue'
-import client from '@/api/client'
+import { useRecommendations } from '@/composables/useRecommendations'
+import { errorMessage } from '@/composables/useRequest'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
@@ -139,13 +140,12 @@ const canWrite = computed(() => ['admin', 'manager'].includes(authStore.user?.ro
 // расчёт по всей сети — только администратор; менеджер отмечает выполнение по своим станциям
 const canGenerate = computed(() => authStore.user?.role === 'admin')
 
-const items = ref([])
-const analysis = ref(null)
-const loading = ref(true)
-const error = ref('')
-const generating = ref(false)
-const checking = ref(false)
-const stationCheck = ref(null)
+const rec = useRecommendations()
+const { items, loading, error, stationCheck, generateState, completeState } = rec
+loading.value = true // до первой загрузки показываем состояние «загрузка»
+const analysis = rec.rules
+const generating = generateState.loading
+const checking = rec.checkingStations
 const busyId = ref(null)
 const actionMessage = ref('')
 const actionError = ref('')
@@ -170,22 +170,17 @@ const load = async () => {
   if (filters.value.priority) params.priority = filters.value.priority
   if (filters.value.status) params.status = filters.value.status
   if (filters.value.category) params.category = filters.value.category
-  const { data } = await client.get('/recommendations', { params })
-  items.value = data.data
+  await rec.load(params)
 }
 
 const generate = async () => {
   actionMessage.value = ''
   actionError.value = ''
-  generating.value = true
   try {
-    const { data } = await client.post('/recommendations/generate')
-    actionMessage.value = `Сохранено рекомендаций: ${data.data.saved}, закрыто автоматически: ${data.data.closed}`
-    await load()
+    const result = await rec.generate()
+    actionMessage.value = `Сохранено рекомендаций: ${result.saved}, закрыто автоматически: ${result.closed}`
   } catch (e) {
-    actionError.value = e.response?.data?.error || e.message
-  } finally {
-    generating.value = false
+    actionError.value = errorMessage(e)
   }
 }
 
@@ -193,15 +188,8 @@ const generate = async () => {
 const checkStations = async () => {
   actionMessage.value = ''
   actionError.value = ''
-  checking.value = true
-  try {
-    const { data } = await client.get('/stations/check')
-    stationCheck.value = data.data
-  } catch (e) {
-    actionError.value = e.response?.data?.error || e.message
-  } finally {
-    checking.value = false
-  }
+  await rec.checkStations()
+  if (rec.stationCheckError.value) actionError.value = rec.stationCheckError.value
 }
 
 const complete = async (r) => {
@@ -209,25 +197,15 @@ const complete = async (r) => {
   actionError.value = ''
   busyId.value = r.id
   try {
-    await client.post(`/recommendations/${r.id}/complete`)
-    await load()
+    await rec.complete(r.id)
   } catch (e) {
-    actionError.value = e.response?.data?.error || e.message
+    actionError.value = errorMessage(e)
   } finally {
     busyId.value = null
   }
 }
 
-onMounted(async () => {
-  try {
-    const [, an] = await Promise.all([load(), client.get('/analysis/rules')])
-    analysis.value = an.data.data
-  } catch (e) {
-    error.value = e.response?.data?.error || e.message
-  } finally {
-    loading.value = false
-  }
-})
+onMounted(() => Promise.all([load(), rec.loadRules()]))
 </script>
 
 <style scoped>

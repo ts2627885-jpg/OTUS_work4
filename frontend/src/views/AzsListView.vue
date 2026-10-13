@@ -89,11 +89,12 @@
 </template>
 
 <script setup>
+import { errorMessage } from '@/composables/useRequest'
 import SidebarIcon from '@/components/layout/SidebarIcon.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { azsAPI } from '@/api/azs'
+import { useStations } from '@/composables/useStations'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -101,7 +102,8 @@ const role = computed(() => authStore.user?.role)
 const isAdmin = computed(() => role.value === 'admin')
 const canWrite = computed(() => ['admin', 'manager'].includes(role.value))
 
-const stations = ref([])
+const { stations, loading, error, load, create: createStation, remove: removeStation, createState } = useStations()
+loading.value = true // до первой загрузки показываем состояние «загрузка»
 const search = ref('')
 const regionFilter = ref('')
 const fuelFilter = ref('')
@@ -123,59 +125,38 @@ const visibleStations = computed(() => {
     .slice()
     .sort((a, b) => String(a[sortKey.value] || '').localeCompare(String(b[sortKey.value] || ''), 'ru'))
 })
-const loading = ref(true)
-const error = ref('')
 const actionError = ref('')
 const showForm = ref(false)
-const saving = ref(false)
-const formError = ref('')
+const saving = createState.loading
+const formError = createState.error
 const fuelInput = ref('')
 const form = ref({ name: '', region: 'Tver region', address: '', manager: '', status: 'active' })
 
 const openStation = (id) => router.push({ name: 'AzsDetail', params: { id } })
 
-const load = async () => {
-  const { data } = await azsAPI.getAll()
-  stations.value = data.data
-}
-
 const create = async () => {
-  formError.value = ''
-  saving.value = true
+  const fuelTypes = fuelInput.value.split(',').map(s => s.trim()).filter(Boolean)
   try {
-    const fuelTypes = fuelInput.value.split(',').map(s => s.trim()).filter(Boolean)
-    await azsAPI.create({ ...form.value, fuelTypes })
-    form.value = { name: '', region: 'Tver region', address: '', manager: '', status: 'active' }
-    fuelInput.value = ''
-    showForm.value = false
-    await load()
-  } catch (e) {
-    formError.value = e.response?.data?.error || e.message
-  } finally {
-    saving.value = false
+    await createStation({ ...form.value, fuelTypes })
+  } catch {
+    return // текст ошибки уже в formError
   }
+  form.value = { name: '', region: 'Tver region', address: '', manager: '', status: 'active' }
+  fuelInput.value = ''
+  showForm.value = false
 }
 
 const remove = async (s) => {
   actionError.value = ''
   if (!confirm(`Удалить станцию «${s.name}»?`)) return
   try {
-    await azsAPI.delete(s.id)
-    await load()
+    await removeStation(s.id)
   } catch (e) {
-    actionError.value = e.response?.data?.error || e.message
+    actionError.value = errorMessage(e)
   }
 }
 
-onMounted(async () => {
-  try {
-    await load()
-  } catch (e) {
-    error.value = e.response?.data?.error || e.message
-  } finally {
-    loading.value = false
-  }
-})
+onMounted(() => load())
 </script>
 
 <style scoped>

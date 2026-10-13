@@ -25,10 +25,12 @@ import dotenv from 'dotenv';
 import { errorHandler, asyncHandler, notFound } from '@middleware/errorHandler.middleware';
 import { requestLogger, healthCheck } from '@middleware/requestLogger.middleware';
 import { createAuthMiddleware } from '@middleware/auth.middleware';
+import { dbContextMiddleware } from '@middleware/db-context.middleware';
 
 // Import config
-import { getPool } from '@config/database';
-import { computeRules } from '@services/rules.service';
+import { getPool, getRawPool } from '@config/database';
+import { enableDbLogSink } from '@utils/db-log-sink';
+import { computeRulesCached, warmRulesCache } from '@services/rules.service';
 import { registerStationRoutes } from './routes/stations.routes';
 import { registerImportRoutes } from './routes/import.routes';
 import { registerRecommendationRoutes } from './routes/recommendations.routes';
@@ -84,6 +86,8 @@ export function createApp(): Express {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ limit: '10mb', extended: true }));
   app.use(requestLogger);
+  // Контекст базы (RLS) на каждый запрос к API: соединение запроса и роль пользователя
+  app.use('/api', dbContextMiddleware());
 
   // ============================================
   // 📊 Health Check
@@ -96,6 +100,8 @@ export function createApp(): Express {
   // 🔧 Initialize Services & Controllers
   // ============================================
   const db = getPool();
+  // Предупреждения и ошибки — в таблицу app_logs, если включено (для Supabase)
+  if (process.env.LOG_TO_DB === 'true') enableDbLogSink(getRawPool());
 
   const userRepository = new UserRepository(db);
   const authService = new AuthService(userRepository);
@@ -219,7 +225,7 @@ export function createApp(): Express {
 
   // --------- Analysis (AI_Agent_Rules) ---------
   app.get('/api/analysis/rules', authenticateToken, asyncHandler(async (_req, res) => {
-    res.json({ success: true, data: await computeRules() });
+    res.json({ success: true, data: await computeRulesCached() });
   }));
 
   // --------- Recommendations: генерация, список, «выполнено» — в routes/recommendations.routes.ts ---------
@@ -276,6 +282,8 @@ async function startServer(): Promise<void> {
         port,
         nodeEnv: process.env.NODE_ENV || 'development'
       });
+      // Прогрев кэша расчёта правил в фоне: первый пользователь получит быстрый ответ
+      warmRulesCache();
     });
 
     // Graceful shutdown

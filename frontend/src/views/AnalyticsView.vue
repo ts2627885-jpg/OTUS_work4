@@ -102,7 +102,8 @@
 <script setup>
 import SidebarIcon from '@/components/layout/SidebarIcon.vue'
 import { ref, computed, onMounted } from 'vue'
-import client from '@/api/client'
+import { analyticsAPI } from '@/api/analytics'
+import { useRequest } from '@/composables/useRequest'
 import { azsAPI } from '@/api/azs'
 import SeriesChart from '@/components/charts/SeriesChart.vue'
 import StateMessage from '@/components/common/StateMessage.vue'
@@ -156,29 +157,22 @@ const fuelFilter = ref('')
 const fuelOptions = computed(() => [...new Set(sections.value.map(s => s.fuel).filter(Boolean))].sort())
 const visibleSections = computed(() => sections.value.filter(s => !s.fuel || !fuelFilter.value || s.fuel === fuelFilter.value))
 const asOf = ref(null)
-const loading = ref(true)
-const error = ref('')
+const tabState = useRequest((tabKey, params) => analyticsAPI.tab(tabKey, params).then(r => r.data.data), null)
+const loading = tabState.loading
+const error = tabState.error
+loading.value = true // до первой загрузки показываем состояние «загрузка»
 
 const cell = (v) => (v === null || v === undefined || v === '' ? '—' : v)
 // числа выравниваем по правому краю, текст — по левому
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
 
 const load = async () => {
-  loading.value = true
-  error.value = ''
-  try {
-    const params = azsId.value && stationTabs.includes(tab.value) ? { azsId: azsId.value } : {}
-    if (tab.value === 'prices') params.window = windowDays.value
-    if (tab.value === 'promotions') params.promoWindow = promoWindow.value
-    const { data } = await client.get(`/analytics/${tab.value}`, { params })
-    sections.value = data.data.sections
-    asOf.value = data.data.asOf
-  } catch (e) {
-    error.value = e.response?.data?.error || e.message
-    sections.value = []
-  } finally {
-    loading.value = false
-  }
+  const params = azsId.value && stationTabs.includes(tab.value) ? { azsId: azsId.value } : {}
+  if (tab.value === 'prices') params.window = windowDays.value
+  if (tab.value === 'promotions') params.promoWindow = promoWindow.value
+  const res = await tabState.run(tab.value, params)
+  sections.value = res ? res.sections : []
+  asOf.value = res ? res.asOf : null
 }
 
 const select = (key) => {

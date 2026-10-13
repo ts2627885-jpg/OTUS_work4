@@ -49,7 +49,12 @@ export function invert(m: number[][]): number[][] | null {
  */
 const elasticityCache = new Map<string, { version: string; value: Elasticity }>();
 
-async function dataVersion(): Promise<string> {
+/** Сброс кэша оценок (после загрузки данных) */
+export function clearElasticityCache(): void {
+  elasticityCache.clear();
+}
+
+export async function dataVersion(): Promise<string> {
   const { rows } = await getPool().query(
     `SELECT max(sale_date)::text AS d, count(*)::text AS n FROM azs.fuel_daily`
   );
@@ -57,13 +62,14 @@ async function dataVersion(): Promise<string> {
 }
 
 /** Оценка эластичности с кэшем по версии данных (см. computePooledElasticity) */
-export async function pooledElasticity(fuel: string, days: number, asOf: string, stationCode?: string): Promise<Elasticity> {
+// version — версия данных, если вызывающий её уже получил (не нужно спрашивать базу на каждую оценку)
+export async function pooledElasticity(fuel: string, days: number, asOf: string, stationCode?: string, version?: string): Promise<Elasticity> {
   const key = [fuel, days, asOf, stationCode ?? '*'].join('|');
-  const version = await dataVersion();
+  const v = version ?? (await dataVersion());
   const hit = elasticityCache.get(key);
-  if (hit && hit.version === version) return hit.value;
+  if (hit && hit.version === v) return hit.value;
   const value = await computePooledElasticity(fuel, days, asOf, stationCode);
-  elasticityCache.set(key, { version, value });
+  elasticityCache.set(key, { version: v, value });
   return value;
 }
 

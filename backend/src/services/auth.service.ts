@@ -33,7 +33,11 @@ export class AuthService {
   private passwordSaltRounds = 12;
 
   constructor(private userRepository: UserRepository) {
-    this.jwtSecret = process.env.JWT_SECRET || 'dev-secret-key-change-in-production';
+    // Без значения по умолчанию: токены, подписанные известным ключом, можно подделать
+    if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+      throw new Error('JWT_SECRET не задан или короче 32 символов (см. backend/.env.example)');
+    }
+    this.jwtSecret = process.env.JWT_SECRET;
     this.jwtExpiration = process.env.JWT_EXPIRES_IN || '24h';
 
     if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
@@ -98,13 +102,13 @@ export class AuthService {
     // Check if username exists
     const existingUsername = await this.userRepository.findByUsername(data.username);
     if (existingUsername) {
-      throw new ConflictError('User', 'Username already exists');
+      throw new ConflictError('Логин уже занят', 'USERNAME_EXISTS');
     }
 
     // Check if email exists
     const existingEmail = await this.userRepository.findByEmail(data.email);
     if (existingEmail) {
-      throw new ConflictError('User', 'Email already exists');
+      throw new ConflictError('Email уже зарегистрирован', 'EMAIL_EXISTS');
     }
 
     // Hash password
