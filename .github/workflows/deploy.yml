@@ -1,8 +1,8 @@
 # Автоматический деплой: после успешного CI на ветках main и master.
-# Бэкенд — Render, фронтенд — Netlify. Каждый хук хранится в секрете репозитория
+# Бэкенд — Render, фронтенд — Vercel. Каждый хук хранится в секрете репозитория
 # (Settings → Secrets and variables → Actions). Хук без секрета пропускается.
 #   RENDER_DEPLOY_HOOK_URL   — Render: сервис azs-pult-backend → Settings → Deploy Hook
-#   NETLIFY_BUILD_HOOK_URL   — Netlify: сайт → Site configuration → Build hooks
+#   VERCEL_DEPLOY_HOOK_URL   — Vercel: проект → Settings → Git → Deploy Hooks
 name: Deploy
 
 on:
@@ -29,13 +29,13 @@ jobs:
           curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL"
           echo "Деплой бэкенда запущен."
 
-      - name: Фронтенд (Netlify)
+      - name: Фронтенд (Vercel)
         env:
-          NETLIFY_BUILD_HOOK_URL: ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
+          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
         run: |
-          if [ -z "$NETLIFY_BUILD_HOOK_URL" ]; then
-            echo "Секрет NETLIFY_BUILD_HOOK_URL не задан: деплой фронтенда пропущен."
+          if [ -z "$VERCEL_DEPLOY_HOOK_URL" ]; then
+            echo "Секрет VERCEL_DEPLOY_HOOK_URL не задан: деплой фронтенда пропущен."
             exit 0
           fi
-          curl -fsS -X POST "$NETLIFY_BUILD_HOOK_URL"
+          curl -fsS -X POST "$VERCEL_DEPLOY_HOOK_URL"
           echo "Деплой фронтенда запущен."
