@@ -29,17 +29,18 @@ async function testPassword() {
     console.log('Username:', user.username);
     console.log('Password hash:', user.password_hash);
 
-    const password = 'Admin123456';
+    // Пароль берётся из окружения (ADMIN_PASSWORD), не из кода
+    const password = process.env.ADMIN_PASSWORD;
+    if (!password) {
+      console.log('Задайте ADMIN_PASSWORD в окружении, чтобы проверить пароль администратора');
+      return;
+    }
     const match = await bcrypt.compare(password, user.password_hash);
 
-    console.log('\nTesting password:', password);
     console.log('Password match:', match);
 
     if (!match) {
-      console.log('\n❌ Password does not match!');
-      console.log('Let me hash the password for you:');
-      const newHash = await bcrypt.hash(password, 10);
-      console.log('New hash:', newHash);
+      console.log('\n❌ Password does not match ADMIN_PASSWORD!');
     } else {
       console.log('\n✅ Password matches!');
     }

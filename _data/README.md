@@ -40,57 +40,17 @@ CREATE DATABASE azs_pult;
 
 ### 2. Создание тестовых пользователей
 
-```sql
--- Администратор
-INSERT INTO users (username, email, password_hash, role, permissions, is_active)
-VALUES (
-  'admin',
-  'admin@azs-pult.ru',
-  '$2a$10$IW6oZ5hAgOPqrO2CNe1Qk.8C0jiWzhpTwnhd/FaQW5U13mkmAeNi.',
-  'admin',
-  ARRAY['*'],
-  true
-);
+Пользователей создаёт скрипт `backend/seed_users.py`. Пароли задаются переменными окружения, в репозитории их нет:
 
--- Менеджер
-INSERT INTO users (username, email, password_hash, role, permissions, is_active)
-VALUES (
-  'manager',
-  'manager@azs-pult.ru',
-  '$2a$10$oM6qJMaRF.qXJZsq7x.H2uM7w8Z9L3b4K2C5D6E7F8G9H0',
-  'manager',
-  ARRAY['manage_azs', 'manage_prices', 'view_analytics'],
-  true
-);
-
--- Аналитик
-INSERT INTO users (username, email, password_hash, role, permissions, is_active)
-VALUES (
-  'analyst',
-  'analyst@azs-pult.ru',
-  '$2a$10$pN7rKNbSG.rYKata8y.I3vN8x9Z0M4c5L3D6E7F8G9H0I1J2',
-  'analyst',
-  ARRAY['view_analytics', 'generate_recommendations'],
-  true
-);
-
--- Просмотр
-INSERT INTO users (username, email, password_hash, role, permissions, is_active)
-VALUES (
-  'viewer',
-  'viewer@azs-pult.ru',
-  '$2a$10$qO8sLOcTH.sZLbub9z.J4wO9y0A1N5d6M4E7F8G9H0I1J2K3',
-  'viewer',
-  ARRAY['view_analytics'],
-  true
-);
+```bash
+export ADMIN_PASSWORD='<пароль администратора, не короче 8 символов>'
+export MANAGER_PASSWORD='<пароль менеджера>'
+export ANALYST_PASSWORD='<пароль аналитика>'
+export VIEWER_PASSWORD='<пароль наблюдателя>'
+cd backend && python seed_users.py
 ```
 
-**Пароли тестовых пользователей** (хешированы bcryptjs):
-- `admin` / `Admin123456`
-- `manager` / `Manager123456`
-- `analyst` / `Analyst123456`
-- `viewer` / `Viewer123456`
+Роли: `admin`, `manager`, `analyst`, `viewer`. Пароли не хранятся в документации и не выводятся скриптом.
 
 ### 3. Импорт данных из CSV
 

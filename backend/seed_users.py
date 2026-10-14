@@ -20,11 +20,25 @@ DB_NAME = os.getenv('DB_NAME', 'azs_pult')
 def hash_password(password):
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt(10)).decode('utf-8')
 
+def required_password(var_name):
+    """Пароль берётся только из окружения: в репозитории паролей нет."""
+    value = os.getenv(var_name, '')
+    if len(value) < 8:
+        raise SystemExit(f"Задайте {var_name} (не короче 8 символов) в окружении или backend/.env")
+    return value
+
 def main():
     print("=" * 70)
     print("Seeding users and AZS stations")
     print("=" * 70)
     print()
+
+    users = [
+        ('admin', 'admin@azs-pult.local', required_password('ADMIN_PASSWORD'), 'admin'),
+        ('manager', 'manager@azs-pult.local', required_password('MANAGER_PASSWORD'), 'manager'),
+        ('analyst', 'analyst@azs-pult.local', required_password('ANALYST_PASSWORD'), 'analyst'),
+        ('viewer', 'viewer@azs-pult.local', required_password('VIEWER_PASSWORD'), 'viewer'),
+    ]
 
     conn = psycopg2.connect(
         host=DB_HOST,
@@ -36,13 +50,6 @@ def main():
     cursor = conn.cursor()
 
     # Create users
-    users = [
-        ('admin', 'admin@azs-pult.local', 'admin123', 'admin'),
-        ('manager', 'manager@azs-pult.local', 'manager123', 'manager'),
-        ('analyst', 'analyst@azs-pult.local', 'analyst123', 'analyst'),
-        ('viewer', 'viewer@azs-pult.local', 'viewer123', 'viewer'),
-    ]
-
     print("[1/2] Creating test users...")
     for username, email, password, role in users:
         password_hash = hash_password(password)
@@ -83,9 +90,9 @@ def main():
     print("✅ Seeding completed")
     print("=" * 70)
     print()
-    print("Test users:")
-    for username, email, password, role in users:
-        print(f"  - {username}: {password} ({role})")
+    print("Test users (passwords are taken from ADMIN_/MANAGER_/ANALYST_/VIEWER_PASSWORD):")
+    for username, _email, _password, role in users:
+        print(f"  - {username} ({role})")
 
     cursor.close()
     conn.close()

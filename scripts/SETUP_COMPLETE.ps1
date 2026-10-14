@@ -81,10 +81,10 @@ Write-Host "━━━━━━━━━━━━━━━━━━━━━━�
 Write-Host ""
 
 Write-Host "📝 ТЕСТОВЫЕ ПОЛЬЗОВАТЕЛИ:" -ForegroundColor Cyan
-Write-Host "  admin    : admin123    (Администратор)"
-Write-Host "  manager  : manager123  (Менеджер)"
-Write-Host "  analyst  : analyst123  (Аналитик)"
-Write-Host "  viewer   : viewer123   (Зритель)"
+Write-Host "  admin    : <ADMIN_PASSWORD>    (Администратор)"
+Write-Host "  manager  : <MANAGER_PASSWORD>  (Менеджер)"
+Write-Host "  analyst  : <ANALYST_PASSWORD>  (Аналитик)"
+Write-Host "  viewer   : <VIEWER_PASSWORD>   (Зритель)"
 Write-Host ""
 
 Write-Host "🚀 ЗАПУСК ПРИЛОЖЕНИЯ:" -ForegroundColor Cyan

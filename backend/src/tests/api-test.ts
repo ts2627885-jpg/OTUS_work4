@@ -1,6 +1,12 @@
 import axios from 'axios';
 
 const BASE_URL = 'http://localhost:3001/api';
+// Пароль администратора задаётся в окружении: ADMIN_PASSWORD=... npx ts-node src/tests/api-test.ts
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+if (!ADMIN_PASSWORD) {
+  console.error('Задайте ADMIN_PASSWORD в окружении');
+  process.exit(1);
+}
 let authToken = '';
 
 const client = axios.create({
@@ -16,7 +22,7 @@ async function runTests() {
     console.log('1️⃣ Testing Login...');
     const loginRes = await client.post('/auth/login', {
       username: 'admin',
-      password: 'Admin123456',
+      password: ADMIN_PASSWORD,
     });
 
     if (loginRes.status === 200 && loginRes.data.data.token.access_token) {

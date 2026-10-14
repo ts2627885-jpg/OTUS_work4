@@ -91,10 +91,10 @@ GRAND TOTAL: 84,033 записей
 ### 👥 ТЕСТОВЫЕ ПОЛЬЗОВАТЕЛИ
 
 ```
-admin    - admin123    (Администратор)
-manager  - manager123  (Менеджер)
-analyst  - analyst123  (Аналитик)
-viewer   - viewer123   (Зритель)
+admin    - <ADMIN_PASSWORD>    (Администратор)
+manager  - <MANAGER_PASSWORD>  (Менеджер)
+analyst  - <ANALYST_PASSWORD>  (Аналитик)
+viewer   - <VIEWER_PASSWORD>   (Зритель)
 ```
 
 ### 🌍 АЗС СТАНЦИИ (5 реальных)

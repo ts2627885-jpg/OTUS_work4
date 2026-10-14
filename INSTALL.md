@@ -40,7 +40,7 @@ azs-pult-pgadmin     Up
 ```bash
 docker-compose exec backend node -e "
 const authService = require('./services/auth.service');
-authService.register('admin', 'admin@example.com', 'Admin123456', 1)
+authService.register('admin', 'admin@example.com', '<ADMIN_PASSWORD>', 1)
   .then(() => console.log('✅ Admin user created'))
   .catch(err => console.error('Error:', err.message));
 "
@@ -183,7 +183,7 @@ curl -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "admin",
-    "password": "Admin123456"
+    "password": "<ADMIN_PASSWORD>"
   }'
 
 # Ответ:
@@ -345,7 +345,7 @@ docker-compose exec redis redis-cli ping
 # 4. Можно залогиниться
 curl -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"Admin123456"}'
+  -d '{"username":"admin","password":"<ADMIN_PASSWORD>"}'
 ```
 
 ---

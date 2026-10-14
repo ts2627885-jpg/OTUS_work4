@@ -93,5 +93,5 @@ Write-Host "🚀 СЛЕДУЮЩЕЕ:" -ForegroundColor Green
 Write-Host "  1. Backend:  cd backend && npm run dev"
 Write-Host "  2. Frontend: cd frontend && npm run dev"
 Write-Host "  3. Браузер:  http://localhost:5173"
-Write-Host "  4. Логин:    admin / admin123"
+Write-Host "  4. Логин:    admin / <ADMIN_PASSWORD>"
 Write-Host ""

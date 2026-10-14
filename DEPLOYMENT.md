@@ -37,12 +37,12 @@ docker-compose ps
 ### Frontend Login
 ```
 Username: admin
-Password: Admin123456
+Password: <ADMIN_PASSWORD>
 ```
 
 Дополнительные пользователи:
-- user / User123456
-- demo / Demo123456
+- user / <USER_PASSWORD>
+- demo / <DEMO_PASSWORD>
 
 ### PostgreSQL
 ```
@@ -254,7 +254,7 @@ docker-compose logs backend
 curl http://localhost:3000/api/auth/login \
   -X POST \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"Admin123456"}'
+  -d '{"username":"admin","password":"<ADMIN_PASSWORD>"}'
 ```
 
 ### Database connection error

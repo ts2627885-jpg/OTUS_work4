@@ -125,7 +125,7 @@ cp .env.example .env
 docker-compose up -d
 sleep 30
 # Открыть http://localhost:3000
-# Логин: admin / Пароль: Admin123456
+# Логин: admin / Пароль: <ADMIN_PASSWORD>
 ```
 
 ### Локально (5 минут)

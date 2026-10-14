@@ -21,7 +21,7 @@ sleep 30
 # 5. Создать админа
 docker-compose exec backend node -e "
 const authService = require('./services/auth.service');
-authService.register('admin', 'admin@example.com', 'Admin123456', 1)
+authService.register('admin', 'admin@example.com', '<ADMIN_PASSWORD>', 1)
   .then(() => console.log('✅ Admin created'))
   .catch(err => console.error(err.message));
 "
@@ -36,7 +36,7 @@ authService.register('admin', 'admin@example.com', 'Admin123456', 1)
 
 ```
 Username: admin
-Password: Admin123456
+Password: <ADMIN_PASSWORD>
 Email: admin@example.com
 Role: Администратор
 ```
@@ -120,10 +120,10 @@ curl http://localhost:3001/health
 # 2. Вход в систему
 curl -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"Admin123456"}'
+  -d '{"username":"admin","password":"<ADMIN_PASSWORD>"}'
 
 # 3. Открыть фронтенд
-# http://localhost:3000 (логин: admin / пароль: Admin123456)
+# http://localhost:3000 (логин: admin / пароль: <ADMIN_PASSWORD>)
 ```
 
 ## 📚 Документация

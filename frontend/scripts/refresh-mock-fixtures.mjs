@@ -1,12 +1,12 @@
 // Обновляет фикстуры мок-режима реальными ответами backend.
-// Запуск: node scripts/refresh-mock-fixtures.mjs  (backend должен работать на 3001, пароль admin — из CLAUDE.md)
+// Запуск: node scripts/refresh-mock-fixtures.mjs  (backend должен работать на 3001, пароль задаётся переменной MOCK_PASSWORD)
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
 const BASE = process.env.API_URL || 'http://localhost:3001/api'
 const USER = process.env.MOCK_USER || 'admin'
-const PASSWORD = process.env.MOCK_PASSWORD || 'Admin123456'
+const PASSWORD = process.env.MOCK_PASSWORD
 const OUT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'src', 'mocks', 'fixtures', 'responses.json')
 
 const login = await fetch(`${BASE}/auth/login`, {

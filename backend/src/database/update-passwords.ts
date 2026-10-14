@@ -14,16 +14,23 @@ async function updatePasswords() {
   });
 
   try {
-    const passwords: { [key: string]: string } = {
-      admin: 'Admin123456',
-      manager: 'Manager123456',
-      analyst: 'Analyst123456',
+    // Пароли только из окружения (в репозитории их нет); пустые или короткие — отказ
+    const passwords: { [key: string]: string | undefined } = {
+      admin: process.env.ADMIN_PASSWORD,
+      manager: process.env.MANAGER_PASSWORD,
+      analyst: process.env.ANALYST_PASSWORD,
+      viewer: process.env.VIEWER_PASSWORD,
     };
 
     for (const [username, password] of Object.entries(passwords)) {
+      if (!password || password.length < 8) {
+        throw new Error(
+          `Не задан пароль для ${username} (переменная ${username.toUpperCase()}_PASSWORD, не короче 8 символов)`
+        );
+      }
       const hash = await bcrypt.hash(password, 10);
       await pool.query('UPDATE users SET password_hash = $1 WHERE username = $2', [hash, username]);
-      console.log(`✅ Updated ${username}: ${password}`);
+      console.log(`✅ Updated ${username}`);
     }
 
     console.log('\n✅ All passwords updated successfully!');

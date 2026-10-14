@@ -49,14 +49,8 @@ CREATE TABLE IF NOT EXISTS recommendations (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert seed users
-INSERT INTO users (username, email, password_hash, role, permissions)
-VALUES
-  ('admin', 'admin@azs-pult.ru', '$2b$10$/SRVk6j0ckLn8Nh9UakdYOz4Q92z3emWQ76CE8SKZWiEzYkWjxgEO', 'admin', ARRAY['*']),
-  ('manager', 'manager@azs-pult.ru', '$2b$10$4UX66jyYU6ywt5/Tduuf0uuS3BBF0b31h6f5Y9T.bn7zwCDPq6KiK', 'manager', ARRAY['manage_azs', 'manage_prices', 'view_analytics']),
-  ('analyst', 'analyst@azs-pult.ru', '$2b$10$t/rONq4nDyFx7UozRJR.2OTgHUTIMeJ0T5NfyAkV/JkfRTFhpjrAi', 'analyst', ARRAY['view_analytics', 'generate_recommendations']),
-  ('viewer', 'viewer@azs-pult.ru', '$2b$10$3WepK3I.pGtsKkb2ddTuOemCmfy4mAy8i.FYVcTSO/B9K/MfNaJKK', 'viewer', ARRAY['view_analytics'])
-ON CONFLICT (username) DO NOTHING;
+-- Тестовые пользователи не создаются этим файлом: их создаёт backend/seed_users.py
+-- с паролями из переменных окружения (ADMIN_PASSWORD и др.). Хешей паролей в репозитории нет.
 
 -- Демо-станции удалены: станции загружаются из данных (см. _BD/pipeline)
 

@@ -38,7 +38,7 @@ describe('auth store', () => {
     authAPI.login.mockResolvedValue({ data: loginResponse })
     const store = useAuthStore()
 
-    await store.login('admin', 'Admin123456')
+    await store.login('admin', 'test-password')
 
     expect(store.token).toBe('token-123')
     expect(store.user.username).toBe('admin')
@@ -67,7 +67,7 @@ describe('auth store', () => {
   it('logout очищает состояние и хранилище', async () => {
     authAPI.login.mockResolvedValue({ data: loginResponse })
     const store = useAuthStore()
-    await store.login('admin', 'Admin123456')
+    await store.login('admin', 'test-password')
 
     store.logout()
 
