@@ -13,11 +13,21 @@ describe('mockAdapter', () => {
 
     expect(res.status).toBe(200)
     expect(res.data.success).toBe(true)
-    expect(res.data.data.map((s) => s.name)).toEqual(['АЗС 121', 'АЗС 122', 'АЗС 123', 'АЗС 124', 'АЗС 125'])
+    expect(res.data.data.map((s) => s.name)).toEqual([
+      'АЗС 121',
+      'АЗС 122',
+      'АЗС 123',
+      'АЗС 124',
+      'АЗС 125',
+    ])
   })
 
   it('отвечает токеном на вход администратора', async () => {
-    const res = await mockAdapter({ method: 'post', url: '/auth/login', data: { username: 'admin', password: 'x' } })
+    const res = await mockAdapter({
+      method: 'post',
+      url: '/auth/login',
+      data: { username: 'admin', password: 'x' },
+    })
 
     expect(res.data.data.token.access_token).toBeTruthy()
     expect(res.data.data.user.username).toBe('admin')

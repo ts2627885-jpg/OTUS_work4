@@ -7,11 +7,19 @@ import { useRequest, useMutation } from '@/composables/useRequest'
  * const { items, loading, error, load, generate, complete, ... } = useRecommendations()
  */
 export function useRecommendations() {
-  const list = useRequest((filters) => recommendationsAPI.list(filters).then(r => r.data.data), [])
-  const rules = useRequest(() => recommendationsAPI.rules().then(r => r.data.data), null)
-  const stationCheckState = useRequest(() => recommendationsAPI.stationCheck().then(r => r.data.data), null)
-  const generateState = useMutation(() => recommendationsAPI.generate().then(r => r.data.data))
-  const completeState = useMutation((id) => recommendationsAPI.complete(id).then(r => r.data.data))
+  const list = useRequest(
+    (filters) => recommendationsAPI.list(filters).then((r) => r.data.data),
+    []
+  )
+  const rules = useRequest(() => recommendationsAPI.rules().then((r) => r.data.data), null)
+  const stationCheckState = useRequest(
+    () => recommendationsAPI.stationCheck().then((r) => r.data.data),
+    null
+  )
+  const generateState = useMutation(() => recommendationsAPI.generate().then((r) => r.data.data))
+  const completeState = useMutation((id) =>
+    recommendationsAPI.complete(id).then((r) => r.data.data)
+  )
 
   // Последние фильтры запоминаем: после пересчёта и закрытия список перезагружается с теми же фильтрами
   let lastFilters = undefined

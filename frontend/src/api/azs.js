@@ -44,5 +44,5 @@ export const azsAPI = {
   // Get weather data
   getWeather(azsId, dateRange) {
     return client.get(`/azs/${azsId}/weather`, { params: dateRange })
-  }
+  },
 }

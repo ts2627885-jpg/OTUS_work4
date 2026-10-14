@@ -17,11 +17,7 @@ import { logger } from '@utils/logger';
  * @example
  * app.use(requestLogger);
  */
-export function requestLogger(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void {
+export function requestLogger(req: Request, res: Response, next: NextFunction): void {
   // Skip logging for health checks
   if (req.path === '/health' || req.path === '/healthz') {
     next();
@@ -34,7 +30,7 @@ export function requestLogger(
   const originalSend = res.send;
 
   // Override send to log after response is sent
-  res.send = function(data: any): Response {
+  res.send = function (data: any): Response {
     const duration = Date.now() - startTime;
 
     logger.httpRequest(req.method, req.originalUrl || req.url, res.statusCode, duration);
@@ -57,6 +53,6 @@ export function healthCheck(req: Request, res: Response): void {
   res.status(200).json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    uptime: process.uptime()
+    uptime: process.uptime(),
   });
 }

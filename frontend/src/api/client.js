@@ -12,8 +12,8 @@ const client = axios.create({
   timeout: 10000,
   adapter: USE_MOCKS ? mockAdapter : undefined,
   headers: {
-    'Content-Type': 'application/json'
-  }
+    'Content-Type': 'application/json',
+  },
 })
 
 // Request interceptor - add JWT token to every request

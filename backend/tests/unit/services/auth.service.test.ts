@@ -9,11 +9,7 @@
 
 import { AuthService } from '@services/auth.service';
 import { UserRepository } from '@repositories/user.repository';
-import {
-  AuthenticationError,
-  ConflictError,
-  NotFoundError
-} from '@utils/errors';
+import { AuthenticationError, ConflictError, NotFoundError } from '@utils/errors';
 import { IUser } from '@models/User';
 
 // AuthService требует JWT_SECRET (без значения по умолчанию); для модульных тестов задаём тестовый ключ
@@ -33,7 +29,7 @@ const mockUserRepository = {
   count: jest.fn(),
   findByRoleId: jest.fn(),
   emailExists: jest.fn(),
-  usernameExists: jest.fn()
+  usernameExists: jest.fn(),
 };
 
 describe('AuthService', () => {
@@ -47,7 +43,7 @@ describe('AuthService', () => {
     role: 'viewer',
     is_active: true,
     created_at: new Date(),
-    updated_at: new Date()
+    updated_at: new Date(),
   };
 
   beforeEach(() => {
@@ -75,26 +71,24 @@ describe('AuthService', () => {
     it('should throw AuthenticationError if user not found', async () => {
       mockUserRepository.findByUsername.mockResolvedValue(null);
 
-      await expect(authService.login('nonexistent', 'password'))
-        .rejects
-        .toThrow(AuthenticationError);
+      await expect(authService.login('nonexistent', 'password')).rejects.toThrow(
+        AuthenticationError
+      );
     });
 
     it('should throw AuthenticationError if password is wrong', async () => {
       mockUserRepository.findByUsername.mockResolvedValue(mockUser);
 
-      await expect(authService.login('testuser', 'wrongpassword'))
-        .rejects
-        .toThrow(AuthenticationError);
+      await expect(authService.login('testuser', 'wrongpassword')).rejects.toThrow(
+        AuthenticationError
+      );
     });
 
     it('should throw AuthenticationError if user is inactive', async () => {
       const inactiveUser = { ...mockUser, is_active: false };
       mockUserRepository.findByUsername.mockResolvedValue(inactiveUser);
 
-      await expect(authService.login('testuser', 'password'))
-        .rejects
-        .toThrow(AuthenticationError);
+      await expect(authService.login('testuser', 'password')).rejects.toThrow(AuthenticationError);
     });
   });
 
@@ -105,13 +99,13 @@ describe('AuthService', () => {
       mockUserRepository.create.mockResolvedValue({
         ...mockUser,
         username: 'newuser',
-        email: 'new@example.com'
+        email: 'new@example.com',
       });
 
       const result = await authService.register({
         username: 'newuser',
         email: 'new@example.com',
-        password: 'ValidPassword123!'
+        password: 'ValidPassword123!',
       });
 
       expect(result).toHaveProperty('token');
@@ -123,26 +117,26 @@ describe('AuthService', () => {
     it('should throw ConflictError if username exists', async () => {
       mockUserRepository.findByUsername.mockResolvedValue(mockUser);
 
-      await expect(authService.register({
-        username: 'testuser',
-        email: 'new@example.com',
-        password: 'ValidPassword123!'
-      }))
-        .rejects
-        .toThrow(ConflictError);
+      await expect(
+        authService.register({
+          username: 'testuser',
+          email: 'new@example.com',
+          password: 'ValidPassword123!',
+        })
+      ).rejects.toThrow(ConflictError);
     });
 
     it('should throw ConflictError if email exists', async () => {
       mockUserRepository.findByUsername.mockResolvedValue(null);
       mockUserRepository.findByEmail.mockResolvedValue(mockUser);
 
-      await expect(authService.register({
-        username: 'newuser',
-        email: 'test@example.com',
-        password: 'ValidPassword123!'
-      }))
-        .rejects
-        .toThrow(ConflictError);
+      await expect(
+        authService.register({
+          username: 'newuser',
+          email: 'test@example.com',
+          password: 'ValidPassword123!',
+        })
+      ).rejects.toThrow(ConflictError);
     });
   });
 
@@ -159,7 +153,7 @@ describe('AuthService', () => {
         email: mockUser.email,
         role: 'viewer',
         permissions: [],
-        azs_access: []
+        azs_access: [],
       });
       expect(result).not.toHaveProperty('password_hash');
     });
@@ -167,9 +161,7 @@ describe('AuthService', () => {
     it('should throw NotFoundError if user not found', async () => {
       mockUserRepository.findById.mockResolvedValue(null);
 
-      await expect(authService.getUserProfile('nonexistent'))
-        .rejects
-        .toThrow(NotFoundError);
+      await expect(authService.getUserProfile('nonexistent')).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -181,8 +173,7 @@ describe('AuthService', () => {
     });
 
     it('should throw AuthenticationError for invalid token', () => {
-      expect(() => authService.verifyToken('invalid.token.format'))
-        .toThrow(AuthenticationError);
+      expect(() => authService.verifyToken('invalid.token.format')).toThrow(AuthenticationError);
     });
   });
 
@@ -200,9 +191,7 @@ describe('AuthService', () => {
     it('should throw NotFoundError if user not found', async () => {
       mockUserRepository.findById.mockResolvedValue(null);
 
-      await expect(authService.refreshToken('nonexistent'))
-        .rejects
-        .toThrow(NotFoundError);
+      await expect(authService.refreshToken('nonexistent')).rejects.toThrow(NotFoundError);
     });
   });
 });

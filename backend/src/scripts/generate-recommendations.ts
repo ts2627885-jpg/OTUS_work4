@@ -16,7 +16,9 @@ import { generateRecommendations } from '@services/recommendations.service';
 async function runAsAdmin<T>(task: () => Promise<T>): Promise<T> {
   const client = await getRawPool().connect();
   try {
-    await client.query("SELECT set_config('app.role', 'admin', false), set_config('app.user_id', '', false)");
+    await client.query(
+      "SELECT set_config('app.role', 'admin', false), set_config('app.user_id', '', false)"
+    );
     return await requestScope.run({ client }, task);
   } finally {
     // Контекст не должен остаться в соединении, которое вернётся в пул
@@ -27,7 +29,9 @@ async function runAsAdmin<T>(task: () => Promise<T>): Promise<T> {
 
 async function main(): Promise<void> {
   const result = await runAsAdmin(() => generateRecommendations());
-  console.log(`Рекомендации пересчитаны: на дату ${result.asOfDate}, сохранено ${result.saved}, закрыто устаревших ${result.closed}`);
+  console.log(
+    `Рекомендации пересчитаны: на дату ${result.asOfDate}, сохранено ${result.saved}, закрыто устаревших ${result.closed}`
+  );
   await closeDatabasePool(getRawPool());
 }
 

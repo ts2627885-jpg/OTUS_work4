@@ -23,7 +23,7 @@ export async function generateRecommendations(): Promise<GenerateResult> {
     let saved = 0;
     const keys: string[] = [];
     for (const r of analysis.recommendations) {
-      const azsId = r.station === 'Вся сеть' ? null : byName.get(r.station) ?? null;
+      const azsId = r.station === 'Вся сеть' ? null : (byName.get(r.station) ?? null);
       if (r.station !== 'Вся сеть' && !azsId) continue;
       keys.push(r.id);
       await client.query(

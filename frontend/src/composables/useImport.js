@@ -7,12 +7,12 @@ import { useRequest, useMutation } from '@/composables/useRequest'
  * const { history, loadHistory, upload, uploadState, summary, loadSummary } = useImport()
  */
 export function useImport() {
-  const historyState = useRequest(() => importAPI.history().then(r => r.data.data), [])
-  const summaryState = useRequest(() => importAPI.summary().then(r => r.data.data), null)
+  const historyState = useRequest(() => importAPI.history().then((r) => r.data.data), [])
+  const summaryState = useRequest(() => importAPI.summary().then((r) => r.data.data), null)
   const uploadState = useMutation((files) => {
     const fd = new FormData()
     for (const f of files) fd.append('file', f)
-    return importAPI.upload(fd).then(r => r.data.data)
+    return importAPI.upload(fd).then((r) => r.data.data)
   })
 
   // Отправка файлов; после неё история обновляется в любом случае (успех или ошибка)

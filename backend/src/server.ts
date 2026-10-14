@@ -37,7 +37,12 @@ import { registerRecommendationRoutes } from './routes/recommendations.routes';
 import { registerAdminRoutes } from './routes/admin.routes';
 import { registerAnalyticsRoutes } from './routes/analytics.routes';
 import { registerDashboardRoutes } from './routes/dashboard.routes';
-import { actorOf, accessibleStationIds, canAccessStation, logLogin } from './services/access.service';
+import {
+  actorOf,
+  accessibleStationIds,
+  canAccessStation,
+  logLogin,
+} from './services/access.service';
 
 // Import services and repositories
 import { AuthService } from '@services/auth.service';
@@ -71,13 +76,15 @@ export function createApp(): Express {
     next();
   });
 
-  app.use(cors({
-    // FRONTEND_URL — список адресов фронтенда через запятую
-    origin: (process.env.FRONTEND_URL || 'http://localhost:3000').split(',').map(s => s.trim()),
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-  }));
+  app.use(
+    cors({
+      // FRONTEND_URL — список адресов фронтенда через запятую
+      origin: (process.env.FRONTEND_URL || 'http://localhost:3000').split(',').map((s) => s.trim()),
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+    })
+  );
 
   // ============================================
   // 📝 Request Processing Middleware
@@ -116,7 +123,9 @@ export function createApp(): Express {
   // --------- Authentication Routes ---------
   app.post('/api/auth/login', (req, res, next) => {
     // журнал входов: успех или ошибка (FR-1.2)
-    res.on('finish', () => { logLogin(req, res.statusCode); });
+    res.on('finish', () => {
+      logLogin(req, res.statusCode);
+    });
     authController.login(req, res).catch(next);
   });
 
@@ -141,43 +150,66 @@ export function createApp(): Express {
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const toNum = (v: unknown) => (v === null || v === undefined ? null : Number(v));
 
-  app.get('/api/azs', authenticateToken, asyncHandler(async (req, res) => {
-    // менеджер видит только назначенные станции (FR-2.2)
-    const ids = await accessibleStationIds(await actorOf(req));
-    const { rows } = await getPool().query(
-      `SELECT id, name, address, region, fuel_types, manager, status, latitude, longitude
-       FROM azs WHERE ($1::uuid[] IS NULL OR id = ANY($1::uuid[])) ORDER BY name`, [ids]
-    );
-    res.json({
-      success: true,
-      data: rows.map(r => ({
-        id: r.id, name: r.name, address: r.address, region: r.region,
-        fuelTypes: r.fuel_types, manager: r.manager, status: r.status,
-        latitude: toNum(r.latitude), longitude: toNum(r.longitude)
-      }))
-    });
-  }));
+  app.get(
+    '/api/azs',
+    authenticateToken,
+    asyncHandler(async (req, res) => {
+      // менеджер видит только назначенные станции (FR-2.2)
+      const ids = await accessibleStationIds(await actorOf(req));
+      const { rows } = await getPool().query(
+        `SELECT id, name, address, region, fuel_types, manager, status, latitude, longitude
+       FROM azs WHERE ($1::uuid[] IS NULL OR id = ANY($1::uuid[])) ORDER BY name`,
+        [ids]
+      );
+      res.json({
+        success: true,
+        data: rows.map((r) => ({
+          id: r.id,
+          name: r.name,
+          address: r.address,
+          region: r.region,
+          fuelTypes: r.fuel_types,
+          manager: r.manager,
+          status: r.status,
+          latitude: toNum(r.latitude),
+          longitude: toNum(r.longitude),
+        })),
+      });
+    })
+  );
 
-  app.get('/api/azs/:id', authenticateToken, asyncHandler(async (req, res) => {
-    if (!UUID_RE.test(req.params.id)) return res.status(404).json({ success: false, error: 'Not found' });
-    if (!(await canAccessStation(await actorOf(req), req.params.id))) {
-      return res.status(404).json({ success: false, error: 'Not found' });
-    }
-    const { rows } = await getPool().query(
-      `SELECT id, name, address, region, fuel_types, manager, status, latitude, longitude
-       FROM azs WHERE id = $1`, [req.params.id]
-    );
-    if (!rows[0]) return res.status(404).json({ success: false, error: 'Not found' });
-    const r = rows[0];
-    res.json({
-      success: true,
-      data: {
-        id: r.id, name: r.name, address: r.address, region: r.region,
-        fuelTypes: r.fuel_types, manager: r.manager, status: r.status,
-        latitude: toNum(r.latitude), longitude: toNum(r.longitude)
+  app.get(
+    '/api/azs/:id',
+    authenticateToken,
+    asyncHandler(async (req, res) => {
+      if (!UUID_RE.test(req.params.id))
+        return res.status(404).json({ success: false, error: 'Not found' });
+      if (!(await canAccessStation(await actorOf(req), req.params.id))) {
+        return res.status(404).json({ success: false, error: 'Not found' });
       }
-    });
-  }));
+      const { rows } = await getPool().query(
+        `SELECT id, name, address, region, fuel_types, manager, status, latitude, longitude
+       FROM azs WHERE id = $1`,
+        [req.params.id]
+      );
+      if (!rows[0]) return res.status(404).json({ success: false, error: 'Not found' });
+      const r = rows[0];
+      res.json({
+        success: true,
+        data: {
+          id: r.id,
+          name: r.name,
+          address: r.address,
+          region: r.region,
+          fuelTypes: r.fuel_types,
+          manager: r.manager,
+          status: r.status,
+          latitude: toNum(r.latitude),
+          longitude: toNum(r.longitude),
+        },
+      });
+    })
+  );
 
   registerAdminRoutes(app, authenticateToken, asyncHandler);
   registerAnalyticsRoutes(app, authenticateToken, asyncHandler);
@@ -190,13 +222,16 @@ export function createApp(): Express {
   // --------- Prices Routes ---------
   const visibleRows = async (req: any, rows: any[]) => {
     const ids = await accessibleStationIds(await actorOf(req));
-    return ids === null ? rows : rows.filter(r => ids.includes(r.id));
+    return ids === null ? rows : rows.filter((r) => ids.includes(r.id));
   };
   // Текущие цены: последнее известное значение по каждой станции и топливу из azs.fuel_daily
   // (public.prices — устаревший снимок 2025 года, не используется)
-  app.get('/api/prices', authenticateToken, asyncHandler(async (req, res) => {
-    const { rows } = await getPool().query(
-      `WITH latest AS (
+  app.get(
+    '/api/prices',
+    authenticateToken,
+    asyncHandler(async (req, res) => {
+      const { rows } = await getPool().query(
+        `WITH latest AS (
          SELECT DISTINCT ON (station_code, fuel_code) station_code, fuel_code, price::float AS price, sale_date
            FROM azs.fuel_daily WHERE price IS NOT NULL
           ORDER BY station_code, fuel_code, sale_date DESC),
@@ -210,48 +245,68 @@ export function createApp(): Express {
          JOIN public.azs a ON substring(a.name from '(\\d{3})$') = l.station_code
          LEFT JOIN prev p ON p.station_code = l.station_code AND p.fuel_code = l.fuel_code
         ORDER BY a.name, l.fuel_code`
-    );
-    res.json({
-      success: true,
-      data: (await visibleRows(req, rows)).map(r => ({
-        id: `${r.id}-${r.fuel_code}`, azsId: r.id, azsName: r.name, fuelType: r.fuel_code,
-        price: r.price, previousPrice: r.prev_price,
-        trend: r.prev_price === null ? 'stable' : r.price > r.prev_price ? 'up' : r.price < r.prev_price ? 'down' : 'stable',
-        updatedAt: r.sale_date
-      }))
-    });
-  }));
+      );
+      res.json({
+        success: true,
+        data: (await visibleRows(req, rows)).map((r) => ({
+          id: `${r.id}-${r.fuel_code}`,
+          azsId: r.id,
+          azsName: r.name,
+          fuelType: r.fuel_code,
+          price: r.price,
+          previousPrice: r.prev_price,
+          trend:
+            r.prev_price === null
+              ? 'stable'
+              : r.price > r.prev_price
+                ? 'up'
+                : r.price < r.prev_price
+                  ? 'down'
+                  : 'stable',
+          updatedAt: r.sale_date,
+        })),
+      });
+    })
+  );
 
   // --------- Analysis (AI_Agent_Rules) ---------
-  app.get('/api/analysis/rules', authenticateToken, asyncHandler(async (_req, res) => {
-    res.json({ success: true, data: await computeRulesCached() });
-  }));
+  app.get(
+    '/api/analysis/rules',
+    authenticateToken,
+    asyncHandler(async (_req, res) => {
+      res.json({ success: true, data: await computeRulesCached() });
+    })
+  );
 
   // --------- Recommendations: генерация, список, «выполнено» — в routes/recommendations.routes.ts ---------
   registerRecommendationRoutes(app, authenticateToken, asyncHandler);
 
   // --------- Admin Routes ---------
 
-  app.get('/api/admin/stats/overall', authenticateToken, asyncHandler(async (_req, res) => {
-    const { rows } = await getPool().query(`
+  app.get(
+    '/api/admin/stats/overall',
+    authenticateToken,
+    asyncHandler(async (_req, res) => {
+      const { rows } = await getPool().query(`
       SELECT
         (SELECT count(*) FROM azs)::int AS total_azs,
         (SELECT count(*) FROM users)::int AS total_users,
         (SELECT count(*) FROM recommendations WHERE status IS DISTINCT FROM 'completed')::int AS active_recommendations,
         (SELECT count(*) FROM recommendations WHERE status = 'completed')::int AS completed_recommendations,
         (SELECT round(avg(price), 2) FROM prices) AS avg_price`);
-    const r = rows[0];
-    res.json({
-      success: true,
-      data: {
-        totalAZS: r.total_azs,
-        totalUsers: r.total_users,
-        activeRecommendations: r.active_recommendations,
-        completedRecommendations: r.completed_recommendations,
-        avgPrice: toNum(r.avg_price)
-      }
-    });
-  }));
+      const r = rows[0];
+      res.json({
+        success: true,
+        data: {
+          totalAZS: r.total_azs,
+          totalUsers: r.total_users,
+          activeRecommendations: r.active_recommendations,
+          completedRecommendations: r.completed_recommendations,
+          avgPrice: toNum(r.avg_price),
+        },
+      });
+    })
+  );
 
   // ============================================
   // 🚫 Error Handling
@@ -279,7 +334,7 @@ async function startServer(): Promise<void> {
       logger.info(`Server started`, 'Server', {
         host,
         port,
-        nodeEnv: process.env.NODE_ENV || 'development'
+        nodeEnv: process.env.NODE_ENV || 'development',
       });
       // Прогрев кэша расчёта правил в фоне: первый пользователь получит быстрый ответ
       warmRulesCache();
@@ -309,7 +364,7 @@ async function startServer(): Promise<void> {
 
 // Start server if this is the entry point
 if (require.main === module) {
-  startServer().catch(error => {
+  startServer().catch((error) => {
     logger.error('Unhandled error', error, 'Server');
     process.exit(1);
   });

@@ -26,7 +26,10 @@ describe('syncPublic: ручные станции', () => {
 
     await syncPublic();
 
-    const { rows } = await db.query(`SELECT name, source FROM public.azs WHERE name = $1 OR source = 'analytics' ORDER BY name`, [MANUAL_NAME]);
+    const { rows } = await db.query(
+      `SELECT name, source FROM public.azs WHERE name = $1 OR source = 'analytics' ORDER BY name`,
+      [MANUAL_NAME]
+    );
     const manual = rows.find((r) => r.name === MANUAL_NAME);
     expect(manual).toBeDefined();
     expect(manual.source).toBe('manual');

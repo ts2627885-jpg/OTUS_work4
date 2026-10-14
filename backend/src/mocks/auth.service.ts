@@ -13,7 +13,8 @@ export interface IUser {
 
 export class MockAuthService {
   async login(username: string, password: string) {
-    const user = MOCK_USERS.find(u => u.username === username) as (typeof MOCK_USERS)[number] & { password?: string } | undefined;
+    const user = MOCK_USERS.find((u) => u.username === username) as
+      ((typeof MOCK_USERS)[number] & { password?: string }) | undefined;
 
     if (!user || user.password !== password) {
       throw new Error('Invalid credentials');
@@ -24,19 +25,19 @@ export class MockAuthService {
       username: user.username,
       email: user.email,
       role: user.role,
-      permissions: user.permissions
+      permissions: user.permissions,
     };
 
     const token = jwt.sign(userWithoutPassword, JWT_SECRET, { expiresIn: '24h' });
 
     return {
       token,
-      user: userWithoutPassword
+      user: userWithoutPassword,
     };
   }
 
   async register(data: { username: string; email: string; password: string }) {
-    const existingUser = MOCK_USERS.find(u => u.username === data.username);
+    const existingUser = MOCK_USERS.find((u) => u.username === data.username);
 
     if (existingUser) {
       throw new Error('User already exists');
@@ -47,19 +48,19 @@ export class MockAuthService {
       username: data.username,
       email: data.email,
       role: 'viewer',
-      permissions: ['view_analytics']
+      permissions: ['view_analytics'],
     };
 
     const token = jwt.sign(newUser, JWT_SECRET, { expiresIn: '24h' });
 
     return {
       token,
-      user: newUser
+      user: newUser,
     };
   }
 
   async getUserProfile(userId: string) {
-    const user = MOCK_USERS.find(u => u.id === userId);
+    const user = MOCK_USERS.find((u) => u.id === userId);
 
     if (!user) {
       throw new Error('User not found');
@@ -70,12 +71,12 @@ export class MockAuthService {
       username: user.username,
       email: user.email,
       role: user.role,
-      permissions: user.permissions
+      permissions: user.permissions,
     };
   }
 
   async refreshToken(userId: string) {
-    const user = MOCK_USERS.find(u => u.id === userId);
+    const user = MOCK_USERS.find((u) => u.id === userId);
 
     if (!user) {
       throw new Error('User not found');
@@ -86,7 +87,7 @@ export class MockAuthService {
       username: user.username,
       email: user.email,
       role: user.role,
-      permissions: user.permissions
+      permissions: user.permissions,
     };
 
     const token = jwt.sign(userWithoutPassword, JWT_SECRET, { expiresIn: '24h' });

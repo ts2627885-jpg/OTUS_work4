@@ -33,7 +33,7 @@ const roleLabel = computed(() => {
     admin: 'Администратор',
     manager: 'Менеджер',
     analyst: 'Аналитик',
-    viewer: 'Просмотр'
+    viewer: 'Просмотр',
   }
   return roleMap[role] || role
 })

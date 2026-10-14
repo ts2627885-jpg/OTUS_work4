@@ -67,7 +67,7 @@ export function createAuthMiddleware(authService: AuthService) {
         id: payload.id,
         username: payload.username,
         email: payload.email,
-        role_id: payload.role_id
+        role_id: payload.role_id,
       };
 
       // Роль пользователя для RLS: политики в базе увидят app.role и app.user_id этого запроса
@@ -81,13 +81,13 @@ export function createAuthMiddleware(authService: AuthService) {
         res.status(401).json({
           success: false,
           error: error.message,
-          code: error.code
+          code: error.code,
         });
       } else {
         logger.error('Unexpected error in auth middleware', error as Error, 'AuthMiddleware');
         res.status(500).json({
           success: false,
-          error: 'Internal server error'
+          error: 'Internal server error',
         });
       }
     }
@@ -125,7 +125,7 @@ export function createOptionalAuthMiddleware(authService: AuthService) {
           id: payload.id,
           username: payload.username,
           email: payload.email,
-          role_id: payload.role_id
+          role_id: payload.role_id,
         };
       } catch (_error) {
         // Invalid token, continue without user
@@ -134,7 +134,11 @@ export function createOptionalAuthMiddleware(authService: AuthService) {
 
       next();
     } catch (error) {
-      logger.error('Unexpected error in optional auth middleware', error as Error, 'AuthMiddleware');
+      logger.error(
+        'Unexpected error in optional auth middleware',
+        error as Error,
+        'AuthMiddleware'
+      );
       // Continue even on error for optional auth
       next();
     }

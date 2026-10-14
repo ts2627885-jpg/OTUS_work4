@@ -1,90 +1,90 @@
-import { Pool } from 'pg'
-import * as fs from 'fs'
-import * as path from 'path'
-import * as zlib from 'zlib'
-import * as tar from 'tar'
-import { createReadStream } from 'fs'
-import * as iconv from 'iconv-lite'
+import { Pool } from 'pg';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as zlib from 'zlib';
+import * as tar from 'tar';
+import { createReadStream } from 'fs';
+import * as iconv from 'iconv-lite';
 
 interface Station {
-  id: string
-  name: string
-  latitude: number
-  longitude: number
-  region: string
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  region: string;
 }
 
 interface Price {
-  id: string
-  station_id: string
-  fuel_type: string
-  price: number
-  date: Date
+  id: string;
+  station_id: string;
+  fuel_type: string;
+  price: number;
+  date: Date;
 }
 
 interface CompetitorPrice {
-  id: string
-  competitor_name: string
-  fuel_type: string
-  price: number
-  date: Date
+  id: string;
+  competitor_name: string;
+  fuel_type: string;
+  price: number;
+  date: Date;
 }
 
 interface ShopSale {
-  id: string
-  station_id: string
-  product: string
-  quantity: number
-  revenue: number
-  date: Date
+  id: string;
+  station_id: string;
+  product: string;
+  quantity: number;
+  revenue: number;
+  date: Date;
 }
 
 interface Promotion {
-  id: string
-  station_id: string
-  title: string
-  description: string
-  discount_percent: number
-  start_date: Date
-  end_date: Date
+  id: string;
+  station_id: string;
+  title: string;
+  description: string;
+  discount_percent: number;
+  start_date: Date;
+  end_date: Date;
 }
 
 interface TrafficData {
-  id: string
-  station_id: string
-  hour: number
-  day: string
-  traffic_count: number
-  date: Date
+  id: string;
+  station_id: string;
+  hour: number;
+  day: string;
+  traffic_count: number;
+  date: Date;
 }
 
 interface WeatherData {
-  id: string
-  station_id: string
-  temperature: number
-  humidity: number
-  wind_speed: number
-  precipitation: number
-  date: Date
+  id: string;
+  station_id: string;
+  temperature: number;
+  humidity: number;
+  wind_speed: number;
+  precipitation: number;
+  date: Date;
 }
 
 class DataImporter {
-  private pool: Pool
-  private dataDir: string
+  private pool: Pool;
+  private dataDir: string;
 
   constructor() {
     this.pool = new Pool({
       connectionString: process.env.DATABASE_URL,
-    })
-    this.dataDir = process.env.DATA_DIR || '/azs-pult-fullstack/_data/'
+    });
+    this.dataDir = process.env.DATA_DIR || '/azs-pult-fullstack/_data/';
   }
 
   async initialize() {
-    await this.createTables()
+    await this.createTables();
   }
 
   private async createTables() {
-    const client = await this.pool.connect()
+    const client = await this.pool.connect();
     try {
       await client.query(`
         CREATE TABLE IF NOT EXISTS stations (
@@ -95,7 +95,7 @@ class DataImporter {
           region VARCHAR(100),
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-      `)
+      `);
 
       await client.query(`
         CREATE TABLE IF NOT EXISTS prices (
@@ -106,7 +106,7 @@ class DataImporter {
           date TIMESTAMP,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-      `)
+      `);
 
       await client.query(`
         CREATE TABLE IF NOT EXISTS competitor_prices (
@@ -117,7 +117,7 @@ class DataImporter {
           date TIMESTAMP,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-      `)
+      `);
 
       await client.query(`
         CREATE TABLE IF NOT EXISTS shop_sales (
@@ -129,7 +129,7 @@ class DataImporter {
           date TIMESTAMP,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-      `)
+      `);
 
       await client.query(`
         CREATE TABLE IF NOT EXISTS promotions (
@@ -142,7 +142,7 @@ class DataImporter {
           end_date TIMESTAMP,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-      `)
+      `);
 
       await client.query(`
         CREATE TABLE IF NOT EXISTS traffic_data (
@@ -154,7 +154,7 @@ class DataImporter {
           date TIMESTAMP,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-      `)
+      `);
 
       await client.query(`
         CREATE TABLE IF NOT EXISTS weather_data (
@@ -167,59 +167,59 @@ class DataImporter {
           date TIMESTAMP,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-      `)
+      `);
     } finally {
-      client.release()
+      client.release();
     }
   }
 
   private detectEncoding(buffer: Buffer): string {
     // Проверить UTF-8 BOM
     if (buffer[0] === 0xef && buffer[1] === 0xbb && buffer[2] === 0xbf) {
-      return 'utf-8'
+      return 'utf-8';
     }
     // Если содержит кириллицу - вероятно CP1251
     try {
-      const text = buffer.toString('utf-8')
-      if (text.includes('ё') || text.includes('Ё')) return 'utf-8'
+      const text = buffer.toString('utf-8');
+      if (text.includes('ё') || text.includes('Ё')) return 'utf-8';
     } catch (e) {
-      return 'cp1251'
+      return 'cp1251';
     }
-    return 'utf-8'
+    return 'utf-8';
   }
 
   private parseCSV(content: string): Record<string, string>[] {
-    const lines = content.split('\n').filter(line => line.trim())
-    if (lines.length < 2) return []
+    const lines = content.split('\n').filter((line) => line.trim());
+    if (lines.length < 2) return [];
 
-    const headers = lines[0].split(',').map(h => h.trim())
-    const data: Record<string, string>[] = []
+    const headers = lines[0].split(',').map((h) => h.trim());
+    const data: Record<string, string>[] = [];
 
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim())
-      const row: Record<string, string> = {}
+      const values = lines[i].split(',').map((v) => v.trim());
+      const row: Record<string, string> = {};
       headers.forEach((header, idx) => {
-        row[header] = values[idx] || ''
-      })
-      data.push(row)
+        row[header] = values[idx] || '';
+      });
+      data.push(row);
     }
 
-    return data
+    return data;
   }
 
   async importStations() {
-    const filePath = path.join(this.dataDir, 'stations.csv')
+    const filePath = path.join(this.dataDir, 'stations.csv');
     if (!fs.existsSync(filePath)) {
-      console.log('⚠️  stations.csv not found')
-      return 0
+      console.log('⚠️  stations.csv not found');
+      return 0;
     }
 
-    const buffer = fs.readFileSync(filePath)
-    const encoding = this.detectEncoding(buffer)
-    const content = iconv.decode(buffer, encoding)
-    const data = this.parseCSV(content)
+    const buffer = fs.readFileSync(filePath);
+    const encoding = this.detectEncoding(buffer);
+    const content = iconv.decode(buffer, encoding);
+    const data = this.parseCSV(content);
 
-    let count = 0
+    let count = 0;
     for (const row of data) {
       try {
         await this.pool.query(
@@ -234,30 +234,30 @@ class DataImporter {
             parseFloat(row.longitude) || 0,
             row.region || 'Unknown',
           ]
-        )
-        count++
+        );
+        count++;
       } catch (err) {
-        console.error('Error inserting station:', err)
+        console.error('Error inserting station:', err);
       }
     }
 
-    console.log(`✅ Станции: ${count} импортировано`)
-    return count
+    console.log(`✅ Станции: ${count} импортировано`);
+    return count;
   }
 
   async importPrices() {
-    const filePath = path.join(this.dataDir, 'prices.csv')
+    const filePath = path.join(this.dataDir, 'prices.csv');
     if (!fs.existsSync(filePath)) {
-      console.log('⚠️  prices.csv not found')
-      return 0
+      console.log('⚠️  prices.csv not found');
+      return 0;
     }
 
-    const buffer = fs.readFileSync(filePath)
-    const encoding = this.detectEncoding(buffer)
-    const content = iconv.decode(buffer, encoding)
-    const data = this.parseCSV(content)
+    const buffer = fs.readFileSync(filePath);
+    const encoding = this.detectEncoding(buffer);
+    const content = iconv.decode(buffer, encoding);
+    const data = this.parseCSV(content);
 
-    let count = 0
+    let count = 0;
     for (const row of data) {
       try {
         await this.pool.query(
@@ -272,30 +272,30 @@ class DataImporter {
             parseFloat(row.price) || 0,
             row.date ? new Date(row.date) : new Date(),
           ]
-        )
-        count++
+        );
+        count++;
       } catch (err) {
-        console.error('Error inserting price:', err)
+        console.error('Error inserting price:', err);
       }
     }
 
-    console.log(`✅ Цены: ${count} импортировано`)
-    return count
+    console.log(`✅ Цены: ${count} импортировано`);
+    return count;
   }
 
   async importCompetitorPrices() {
-    const filePath = path.join(this.dataDir, 'competitor_prices.csv')
+    const filePath = path.join(this.dataDir, 'competitor_prices.csv');
     if (!fs.existsSync(filePath)) {
-      console.log('⚠️  competitor_prices.csv not found')
-      return 0
+      console.log('⚠️  competitor_prices.csv not found');
+      return 0;
     }
 
-    const buffer = fs.readFileSync(filePath)
-    const encoding = this.detectEncoding(buffer)
-    const content = iconv.decode(buffer, encoding)
-    const data = this.parseCSV(content)
+    const buffer = fs.readFileSync(filePath);
+    const encoding = this.detectEncoding(buffer);
+    const content = iconv.decode(buffer, encoding);
+    const data = this.parseCSV(content);
 
-    let count = 0
+    let count = 0;
     for (const row of data) {
       try {
         await this.pool.query(
@@ -310,30 +310,30 @@ class DataImporter {
             parseFloat(row.price) || 0,
             row.date ? new Date(row.date) : new Date(),
           ]
-        )
-        count++
+        );
+        count++;
       } catch (err) {
         // Игнорируем некритичные ошибки
       }
     }
 
-    console.log(`✅ Конкуренты: ${count} импортировано`)
-    return count
+    console.log(`✅ Конкуренты: ${count} импортировано`);
+    return count;
   }
 
   async importShopSales() {
-    const filePath = path.join(this.dataDir, 'shop_sales.csv')
+    const filePath = path.join(this.dataDir, 'shop_sales.csv');
     if (!fs.existsSync(filePath)) {
-      console.log('⚠️  shop_sales.csv not found')
-      return 0
+      console.log('⚠️  shop_sales.csv not found');
+      return 0;
     }
 
-    const buffer = fs.readFileSync(filePath)
-    const encoding = this.detectEncoding(buffer)
-    const content = iconv.decode(buffer, encoding)
-    const data = this.parseCSV(content)
+    const buffer = fs.readFileSync(filePath);
+    const encoding = this.detectEncoding(buffer);
+    const content = iconv.decode(buffer, encoding);
+    const data = this.parseCSV(content);
 
-    let count = 0
+    let count = 0;
     for (const row of data) {
       try {
         await this.pool.query(
@@ -349,30 +349,30 @@ class DataImporter {
             parseFloat(row.revenue) || 0,
             row.date ? new Date(row.date) : new Date(),
           ]
-        )
-        count++
+        );
+        count++;
       } catch (err) {
-        console.error('Error inserting shop sale:', err)
+        console.error('Error inserting shop sale:', err);
       }
     }
 
-    console.log(`✅ Продажи: ${count} импортировано`)
-    return count
+    console.log(`✅ Продажи: ${count} импортировано`);
+    return count;
   }
 
   async importPromotions() {
-    const filePath = path.join(this.dataDir, 'promotions.csv')
+    const filePath = path.join(this.dataDir, 'promotions.csv');
     if (!fs.existsSync(filePath)) {
-      console.log('⚠️  promotions.csv not found')
-      return 0
+      console.log('⚠️  promotions.csv not found');
+      return 0;
     }
 
-    const buffer = fs.readFileSync(filePath)
-    const encoding = this.detectEncoding(buffer)
-    const content = iconv.decode(buffer, encoding)
-    const data = this.parseCSV(content)
+    const buffer = fs.readFileSync(filePath);
+    const encoding = this.detectEncoding(buffer);
+    const content = iconv.decode(buffer, encoding);
+    const data = this.parseCSV(content);
 
-    let count = 0
+    let count = 0;
     for (const row of data) {
       try {
         await this.pool.query(
@@ -389,30 +389,30 @@ class DataImporter {
             row.start_date ? new Date(row.start_date) : new Date(),
             row.end_date ? new Date(row.end_date) : new Date(),
           ]
-        )
-        count++
+        );
+        count++;
       } catch (err) {
-        console.error('Error inserting promotion:', err)
+        console.error('Error inserting promotion:', err);
       }
     }
 
-    console.log(`✅ Промо: ${count} импортировано`)
-    return count
+    console.log(`✅ Промо: ${count} импортировано`);
+    return count;
   }
 
   async importTrafficData() {
-    const filePath = path.join(this.dataDir, 'traffic_data.csv')
+    const filePath = path.join(this.dataDir, 'traffic_data.csv');
     if (!fs.existsSync(filePath)) {
-      console.log('⚠️  traffic_data.csv not found')
-      return 0
+      console.log('⚠️  traffic_data.csv not found');
+      return 0;
     }
 
-    const buffer = fs.readFileSync(filePath)
-    const encoding = this.detectEncoding(buffer)
-    const content = iconv.decode(buffer, encoding)
-    const data = this.parseCSV(content)
+    const buffer = fs.readFileSync(filePath);
+    const encoding = this.detectEncoding(buffer);
+    const content = iconv.decode(buffer, encoding);
+    const data = this.parseCSV(content);
 
-    let count = 0
+    let count = 0;
     for (const row of data) {
       try {
         await this.pool.query(
@@ -428,30 +428,30 @@ class DataImporter {
             parseInt(row.traffic_count) || 0,
             row.date ? new Date(row.date) : new Date(),
           ]
-        )
-        count++
+        );
+        count++;
       } catch (err) {
-        console.error('Error inserting traffic data:', err)
+        console.error('Error inserting traffic data:', err);
       }
     }
 
-    console.log(`✅ Трафик: ${count} импортировано`)
-    return count
+    console.log(`✅ Трафик: ${count} импортировано`);
+    return count;
   }
 
   async importWeatherData() {
-    const filePath = path.join(this.dataDir, 'weather_data.csv')
+    const filePath = path.join(this.dataDir, 'weather_data.csv');
     if (!fs.existsSync(filePath)) {
-      console.log('⚠️  weather_data.csv not found')
-      return 0
+      console.log('⚠️  weather_data.csv not found');
+      return 0;
     }
 
-    const buffer = fs.readFileSync(filePath)
-    const encoding = this.detectEncoding(buffer)
-    const content = iconv.decode(buffer, encoding)
-    const data = this.parseCSV(content)
+    const buffer = fs.readFileSync(filePath);
+    const encoding = this.detectEncoding(buffer);
+    const content = iconv.decode(buffer, encoding);
+    const data = this.parseCSV(content);
 
-    let count = 0
+    let count = 0;
     for (const row of data) {
       try {
         await this.pool.query(
@@ -468,23 +468,23 @@ class DataImporter {
             parseFloat(row.precipitation) || 0,
             row.date ? new Date(row.date) : new Date(),
           ]
-        )
-        count++
+        );
+        count++;
       } catch (err) {
-        console.error('Error inserting weather data:', err)
+        console.error('Error inserting weather data:', err);
       }
     }
 
-    console.log(`✅ Погода: ${count} импортировано`)
-    return count
+    console.log(`✅ Погода: ${count} импортировано`);
+    return count;
   }
 
   async run() {
-    console.log('\n📊 Импорт данных AZS Dashboard')
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
+    console.log('\n📊 Импорт данных AZS Dashboard');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
     try {
-      await this.initialize()
+      await this.initialize();
 
       const results = {
         stations: await this.importStations(),
@@ -494,20 +494,20 @@ class DataImporter {
         promotions: await this.importPromotions(),
         traffic: await this.importTrafficData(),
         weather: await this.importWeatherData(),
-      }
+      };
 
-      const total = Object.values(results).reduce((a, b) => a + b, 0)
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-      console.log(`📈 Итого: ${total} записей ✓\n`)
-      console.log('✨ Импорт завершен!')
+      const total = Object.values(results).reduce((a, b) => a + b, 0);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log(`📈 Итого: ${total} записей ✓\n`);
+      console.log('✨ Импорт завершен!');
     } catch (err) {
-      console.error('❌ Ошибка импорта:', err)
+      console.error('❌ Ошибка импорта:', err);
     } finally {
-      await this.pool.end()
+      await this.pool.end();
     }
   }
 }
 
 // Запустить импорт
-const importer = new DataImporter()
-importer.run()
+const importer = new DataImporter();
+importer.run();

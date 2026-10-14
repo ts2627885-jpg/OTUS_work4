@@ -29,7 +29,9 @@ export async function bindUserContext(userId: string): Promise<void> {
   let role = '';
   if (valid) {
     // Чтение users разрешено любому контексту (см. 010_rls): нужно для входа и проверки роли
-    const { rows } = await client.query('SELECT role FROM users WHERE id = $1 AND is_active', [userId]);
+    const { rows } = await client.query('SELECT role FROM users WHERE id = $1 AND is_active', [
+      userId,
+    ]);
     role = rows[0]?.role ?? '';
   }
   await client.query(

@@ -10,16 +10,16 @@ import { getPool } from '@config/database';
 
 export interface Elasticity {
   fuel: string;
-  scope: string;               // 'сеть' или код станции
-  elasticity: number | null;   // b, если значим
-  rawElasticity: number;       // b без проверки значимости
+  scope: string; // 'сеть' или код станции
+  elasticity: number | null; // b, если значим
+  rawElasticity: number; // b без проверки значимости
   se: number | null;
   t: number | null;
   r2: number | null;
   n: number;
-  excludedDays: number;        // нерабочие дни станции, исключённые из оценки
+  excludedDays: number; // нерабочие дни станции, исключённые из оценки
   reliable: boolean;
-  reason: string;              // почему надёжна или нет
+  reason: string; // почему надёжна или нет
 }
 
 /** Обращение матрицы методом Гаусса–Жордана; null — если матрица вырождена */
@@ -39,7 +39,7 @@ export function invert(m: number[][]): number[][] | null {
       for (let j = 0; j < 2 * n; j++) a[r][j] -= f * a[col][j];
     }
   }
-  return a.map(row => row.slice(n));
+  return a.map((row) => row.slice(n));
 }
 
 /**
@@ -63,7 +63,13 @@ export async function dataVersion(): Promise<string> {
 
 /** Оценка эластичности с кэшем по версии данных (см. computePooledElasticity) */
 // version — версия данных, если вызывающий её уже получил (не нужно спрашивать базу на каждую оценку)
-export async function pooledElasticity(fuel: string, days: number, asOf: string, stationCode?: string, version?: string): Promise<Elasticity> {
+export async function pooledElasticity(
+  fuel: string,
+  days: number,
+  asOf: string,
+  stationCode?: string,
+  version?: string
+): Promise<Elasticity> {
   const key = [fuel, days, asOf, stationCode ?? '*'].join('|');
   const v = version ?? (await dataVersion());
   const hit = elasticityCache.get(key);
@@ -81,7 +87,12 @@ export const CLOSED_DAY_SHARE = 0.1;
  * Оценка по сети (stationCode не задан) или по одной станции (stationCode задан).
  * По станции фиксированного эффекта станции нет, выборка только этой станции.
  */
-async function computePooledElasticity(fuel: string, days: number, asOf: string, stationCode?: string): Promise<Elasticity> {
+async function computePooledElasticity(
+  fuel: string,
+  days: number,
+  asOf: string,
+  stationCode?: string
+): Promise<Elasticity> {
   // Нерабочие дни станции исключаются: общий объём за день (все виды топлива) меньше
   // CLOSED_DAY_SHARE от медианного дневного объёма этой станции за окно.
   const all = await getPool().query(
@@ -101,20 +112,32 @@ async function computePooledElasticity(fuel: string, days: number, asOf: string,
         AND f.sale_date > $1::date - ($2 || ' days')::interval AND f.sale_date <= $1::date`,
     [asOf, days, fuel, stationCode ?? null]
   );
-  const rows = all.rows.filter(r => r.t >= CLOSED_DAY_SHARE * r.m);
+  const rows = all.rows.filter((r) => r.t >= CLOSED_DAY_SHARE * r.m);
   const excludedDays = all.rows.length - rows.length;
-  const stations = [...new Set(rows.map(r => r.station_code))].sort();
-  const dows = [2, 3, 4, 5, 6, 7];   // день недели, базовый — понедельник (1)
+  const stations = [...new Set(rows.map((r) => r.station_code))].sort();
+  const dows = [2, 3, 4, 5, 6, 7]; // день недели, базовый — понедельник (1)
   // сезонность (месяц) идентифицируется только на окнах не короче полугода
   const months = days >= 180 ? [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] : []; // базовый — январь
   const fail = (reason: string, n = rows.length): Elasticity => ({
-    fuel, scope: stationCode ?? 'сеть', elasticity: null, rawElasticity: NaN, se: null, t: null, r2: null, n, excludedDays, reliable: false, reason
+    fuel,
+    scope: stationCode ?? 'сеть',
+    elasticity: null,
+    rawElasticity: NaN,
+    se: null,
+    t: null,
+    r2: null,
+    n,
+    excludedDays,
+    reliable: false,
+    reason,
   });
   const minObs = stationCode ? 120 : 200;
-  if (rows.length < minObs || (!stationCode && stations.length < 2)) return fail('мало наблюдений для оценки');
+  if (rows.length < minObs || (!stationCode && stations.length < 2))
+    return fail('мало наблюдений для оценки');
 
   // признаки: [1, ln цены, станции(кроме первой), дни недели, праздник, месяцы]
-  const X: number[][] = [], y: number[] = [];
+  const X: number[][] = [],
+    y: number[] = [];
   for (const r of rows) {
     const lp = Math.log(r.price);
     const x = [1, lp];
@@ -134,7 +157,7 @@ async function computePooledElasticity(fuel: string, days: number, asOf: string,
     const sum = X.reduce((acc, row) => acc + row[j], 0);
     if (sum > 0 && sum < n) keep.push(j);
   }
-  const Xk = X.map(row => keep.map(j => row[j]));
+  const Xk = X.map((row) => keep.map((j) => row[j]));
   const k = keep.length;
   // нормальные уравнения
   const XtX = Array.from({ length: k }, () => new Array(k).fill(0));
@@ -149,7 +172,7 @@ async function computePooledElasticity(fuel: string, days: number, asOf: string,
   }
   const inv = invert(XtX);
   if (!inv) return fail('признаки линейно зависимы (нет вариации цен)');
-  const beta = inv.map(row => row.reduce((s, v, j) => s + v * Xty[j], 0));
+  const beta = inv.map((row) => row.reduce((s, v, j) => s + v * Xty[j], 0));
 
   let rss = 0;
   const meanY = y.reduce((a, b) => a + b, 0) / y.length;
@@ -173,7 +196,8 @@ async function computePooledElasticity(fuel: string, days: number, asOf: string,
     arr.push(Math.log(r.price));
     byStation.set(r.station_code, arr);
   }
-  let ss = 0, cnt = 0;
+  let ss = 0,
+    cnt = 0;
   for (const arr of byStation.values()) {
     const m = arr.reduce((a, c) => a + c, 0) / arr.length;
     for (const v of arr) ss += (v - m) ** 2;
@@ -182,10 +206,19 @@ async function computePooledElasticity(fuel: string, days: number, asOf: string,
   const spread = Math.sqrt(ss / cnt);
   let reason = 'значима';
   let reliable = true;
-  if (spread < 0.02) { reliable = false; reason = 'цена почти не менялась'; }
-  else if (t === null || Math.abs(t) < 2) { reliable = false; reason = 'эффект цены не отличим от нуля (|t| < 2)'; }
-  else if (b >= 0) { reliable = false; reason = 'оценка положительная: спрос не падает с ценой'; }
-  else if (b < -10) { reliable = false; reason = 'оценка нереалистично велика'; }
+  if (spread < 0.02) {
+    reliable = false;
+    reason = 'цена почти не менялась';
+  } else if (t === null || Math.abs(t) < 2) {
+    reliable = false;
+    reason = 'эффект цены не отличим от нуля (|t| < 2)';
+  } else if (b >= 0) {
+    reliable = false;
+    reason = 'оценка положительная: спрос не падает с ценой';
+  } else if (b < -10) {
+    reliable = false;
+    reason = 'оценка нереалистично велика';
+  }
 
   return {
     fuel,
@@ -198,7 +231,7 @@ async function computePooledElasticity(fuel: string, days: number, asOf: string,
     n,
     excludedDays,
     reliable,
-    reason
+    reason,
   };
 }
 

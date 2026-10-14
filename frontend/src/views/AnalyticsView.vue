@@ -6,13 +6,20 @@
     </div>
 
     <div class="tabs">
-      <button v-for="t in tabs" :key="t.key" class="tab" :class="{ active: tab === t.key }" @click="select(t.key)">
+      <button
+        v-for="t in tabs"
+        :key="t.key"
+        class="tab"
+        :class="{ active: tab === t.key }"
+        @click="select(t.key)"
+      >
         {{ t.label }}
       </button>
     </div>
 
     <div class="filters" v-if="tab === 'promotions'">
-      <label>Окно до и после старта
+      <label
+        >Окно до и после старта
         <select v-model.number="promoWindow" @change="load">
           <option :value="7">7 дней</option>
           <option :value="14">14 дней</option>
@@ -22,7 +29,8 @@
     </div>
 
     <div class="filters" v-if="tab === 'prices'">
-      <label>Окно эластичности
+      <label
+        >Окно эластичности
         <select v-model.number="windowDays" @change="load">
           <option :value="7">7 дней</option>
           <option :value="28">28 дней</option>
@@ -33,16 +41,20 @@
     </div>
 
     <div class="filters" v-if="stationTabs.includes(tab)">
-      <label>АЗС
+      <label
+        >АЗС
         <select v-model="azsId" @change="load">
           <option value="">все доступные</option>
-          <option v-for="s in stations" :key="s.id" :value="s.id">{{ s.name }}</option>
+          <option v-for="s in stations" :key="s.id" :value="s.id">
+            {{ s.name }}
+          </option>
         </select>
       </label>
     </div>
 
     <div class="filters" v-if="tab === 'competitors' && fuelOptions.length">
-      <label>Топливо
+      <label
+        >Топливо
         <select v-model="fuelFilter">
           <option value="">все</option>
           <option v-for="f in fuelOptions" :key="f" :value="f">{{ f }}</option>
@@ -56,24 +68,37 @@
     <template v-else>
       <div v-if="tab === 'prices' && simRows.length" class="card">
         <h2>Симулятор цены</h2>
-        <p class="note">Прогноз по модели эластичности: изменение объёма ≈ эластичность × (новая цена − цена) / цена. Для пар без надёжной модели прогноз не строится.</p>
+        <p class="note">
+          Прогноз по модели эластичности: изменение объёма ≈ эластичность × (новая цена − цена) /
+          цена. Для пар без надёжной модели прогноз не строится.
+        </p>
         <div class="sim">
-          <label>Станция и топливо
+          <label
+            >Станция и топливо
             <select v-model="simIndex">
-              <option v-for="(r, i) in simRows" :key="i" :value="i">{{ r.station }} · {{ r.fuel }} ({{ r.price }} ₽)</option>
+              <option v-for="(r, i) in simRows" :key="i" :value="i">
+                {{ r.station }} · {{ r.fuel }} ({{ r.price }} ₽)
+              </option>
             </select>
           </label>
-          <label>Новая цена, ₽/л
+          <label
+            >Новая цена, ₽/л
             <input type="number" step="0.01" v-model.number="simPrice" />
           </label>
         </div>
         <div v-if="simResult" class="sim-result">
           <div v-if="simResult.reliable">
-            Объём: <b>{{ simResult.volumeChangePct }}%</b><span v-if="simResult.bandLow !== null"> (95%: от {{ simResult.bandLow }}% до {{ simResult.bandHigh }}%)</span>
+            Объём: <b>{{ simResult.volumeChangePct }}%</b
+            ><span v-if="simResult.bandLow !== null">
+              (95%: от {{ simResult.bandLow }}% до {{ simResult.bandHigh }}%)</span
+            >
             ({{ simResult.volumeAfter }} л/день вместо {{ simResult.volumeNow }})<br />
             Выручка: <b>{{ simResult.revenueDelta }} ₽/день</b> к текущей
           </div>
-          <div v-else class="empty">Эластичность для этой пары ненадёжна (R² &lt; 0.36) — прогноз не строится. Нужен A/B-тест цены.</div>
+          <div v-else class="empty">
+            Эластичность для этой пары ненадёжна (R² &lt; 0.36) — прогноз не строится. Нужен
+            A/B-тест цены.
+          </div>
         </div>
       </div>
 
@@ -85,11 +110,15 @@
         <div v-else-if="s.rows.length" class="table-wrap">
           <table class="table">
             <thead>
-              <tr><th v-for="c in s.columns" :key="c.key">{{ c.label }}</th></tr>
+              <tr>
+                <th v-for="c in s.columns" :key="c.key">{{ c.label }}</th>
+              </tr>
             </thead>
             <tbody>
               <tr v-for="(r, j) in s.rows" :key="j">
-                <td v-for="c in s.columns" :key="c.key" :class="{ num: isNum(r[c.key]) }">{{ cell(r[c.key]) }}</td>
+                <td v-for="c in s.columns" :key="c.key" :class="{ num: isNum(r[c.key]) }">
+                  {{ cell(r[c.key]) }}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -115,7 +144,7 @@ const tabs = [
   { key: 'factors', label: 'Факторы спроса' },
   { key: 'volume', label: 'Влияние на объём' },
   { key: 'shop', label: 'Сопутствующие товары' },
-  { key: 'promotions', label: 'Акции' }
+  { key: 'promotions', label: 'Акции' },
 ]
 // вкладки, где можно выбрать одну станцию
 const stationTabs = ['prices', 'competitors', 'traffic', 'volume', 'shop']
@@ -125,7 +154,9 @@ const simIndex = ref(0)
 const simPrice = ref(null)
 
 /** Строки для симулятора: только пары с ценой и объёмом */
-const simRows = computed(() => (sections.value[0]?.rows || []).filter(r => r.price && r.volumeMa7))
+const simRows = computed(() =>
+  (sections.value[0]?.rows || []).filter((r) => r.price && r.volumeMa7)
+)
 const simResult = computed(() => {
   const r = simRows.value[simIndex.value]
   if (!r || simPrice.value === null || simPrice.value === '' || !(simPrice.value > 0)) return null
@@ -144,7 +175,7 @@ const simResult = computed(() => {
     volumeChangePct: volumeChangePct.toFixed(1),
     volumeAfter: Math.round(volumeAfter),
     volumeNow: Math.round(r.volumeMa7),
-    revenueDelta: Math.round(revenueDelta).toLocaleString('ru-RU')
+    revenueDelta: Math.round(revenueDelta).toLocaleString('ru-RU'),
   }
 })
 const azsId = ref('')
@@ -154,10 +185,17 @@ const stations = ref([])
 const sections = ref([])
 // переключатель топлива: раздел с полем fuel виден, если выбран его вид топлива (или выбрано «все»)
 const fuelFilter = ref('')
-const fuelOptions = computed(() => [...new Set(sections.value.map(s => s.fuel).filter(Boolean))].sort())
-const visibleSections = computed(() => sections.value.filter(s => !s.fuel || !fuelFilter.value || s.fuel === fuelFilter.value))
+const fuelOptions = computed(() =>
+  [...new Set(sections.value.map((s) => s.fuel).filter(Boolean))].sort()
+)
+const visibleSections = computed(() =>
+  sections.value.filter((s) => !s.fuel || !fuelFilter.value || s.fuel === fuelFilter.value)
+)
 const asOf = ref(null)
-const tabState = useRequest((tabKey, params) => analyticsAPI.tab(tabKey, params).then(r => r.data.data), null)
+const tabState = useRequest(
+  (tabKey, params) => analyticsAPI.tab(tabKey, params).then((r) => r.data.data),
+  null
+)
 const loading = tabState.loading
 const error = tabState.error
 loading.value = true // до первой загрузки показываем состояние «загрузка»
@@ -192,29 +230,135 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.analytics { max-width: 1200px; margin: 0 auto; }
-.head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem; }
-h1 { margin: 0; color: #333; }
-h2 { font-size: 1.05rem; color: #444; margin: 0 0 0.4rem; }
-.meta { color: #777; font-size: 0.9rem; margin: 0; }
-.note { color: #777; font-size: 0.85rem; margin: 0 0 0.8rem; }
-.tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1rem; }
-.tab { border: 1px solid #ddd; background: white; border-radius: 999px; padding: 0.4rem 0.9rem; cursor: pointer; color: #444; }
-.tab.active { background: var(--accent); border-color: var(--accent); color: white; }
-.filters { margin-bottom: 1rem; }
-.filters label { display: flex; flex-direction: column; font-size: 0.85rem; color: #555; gap: 0.2rem; max-width: 280px; }
-.filters select { padding: 0.35rem; border: 1px solid #ddd; border-radius: 6px; }
-.card { background: white; border-radius: 12px; padding: 1.2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 1.2rem; }
-.table-wrap { overflow-x: auto; }
-.chart { margin-bottom: 1rem; }
-.sim { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
-.sim label { display: flex; flex-direction: column; font-size: 0.85rem; color: #555; gap: 0.2rem; min-width: 260px; }
-.sim select, .sim input { padding: 0.4rem; border: 1px solid #ddd; border-radius: 6px; }
-.sim-result { font-size: 0.95rem; line-height: 1.6; }
-.table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-th, td { padding: 0.5rem 0.7rem; text-align: left; border-bottom: 1px solid #eee; white-space: nowrap; }
-th { color: #555; font-weight: 600; background: #f7f7fb; }
-td.num { text-align: right; font-variant-numeric: tabular-nums; }
-.state, .empty { color: #666; padding: 1.5rem; text-align: center; }
-.state.error { color: #c0392b; }
+.analytics {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 1rem;
+}
+h1 {
+  margin: 0;
+  color: #333;
+}
+h2 {
+  font-size: 1.05rem;
+  color: #444;
+  margin: 0 0 0.4rem;
+}
+.meta {
+  color: #777;
+  font-size: 0.9rem;
+  margin: 0;
+}
+.note {
+  color: #777;
+  font-size: 0.85rem;
+  margin: 0 0 0.8rem;
+}
+.tabs {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.tab {
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 999px;
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  color: #444;
+}
+.tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+.filters {
+  margin-bottom: 1rem;
+}
+.filters label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.85rem;
+  color: #555;
+  gap: 0.2rem;
+  max-width: 280px;
+}
+.filters select {
+  padding: 0.35rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1.2rem;
+}
+.table-wrap {
+  overflow-x: auto;
+}
+.chart {
+  margin-bottom: 1rem;
+}
+.sim {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.8rem;
+}
+.sim label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.85rem;
+  color: #555;
+  gap: 0.2rem;
+  min-width: 260px;
+}
+.sim select,
+.sim input {
+  padding: 0.4rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+.sim-result {
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+th,
+td {
+  padding: 0.5rem 0.7rem;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+  white-space: nowrap;
+}
+th {
+  color: #555;
+  font-weight: 600;
+  background: #f7f7fb;
+}
+td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.state,
+.empty {
+  color: #666;
+  padding: 1.5rem;
+  text-align: center;
+}
+.state.error {
+  color: #c0392b;
+}
 </style>

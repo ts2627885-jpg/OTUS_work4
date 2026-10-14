@@ -9,8 +9,8 @@ const mockClientQuery = jest.fn();
 jest.mock('@config/database', () => ({
   getPool: () => ({
     query: mockQuery,
-    connect: async () => ({ query: mockClientQuery, release: mockRelease })
-  })
+    connect: async () => ({ query: mockClientQuery, release: mockRelease }),
+  }),
 }));
 
 import { syncPublic } from '@services/public-sync.service';
@@ -39,7 +39,7 @@ describe('syncPublic', () => {
     mockQuery.mockResolvedValueOnce({ rows: [] });
     mockClientQuery
       .mockRejectedValueOnce(new Error('столбец не существует')) // сам скрипт
-      .mockResolvedValueOnce({ rows: [] });                     // ROLLBACK
+      .mockResolvedValueOnce({ rows: [] }); // ROLLBACK
 
     await expect(syncPublic()).rejects.toThrow('столбец не существует');
 

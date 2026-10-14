@@ -9,7 +9,7 @@ async function checkUsers() {
     port: parseInt(process.env.DB_PORT || '5432', 10),
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'azs_pult'
+    database: process.env.DB_NAME || 'azs_pult',
   });
 
   try {

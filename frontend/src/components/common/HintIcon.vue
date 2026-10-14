@@ -1,6 +1,13 @@
 <template>
   <!-- Короткая подсказка рядом с подписью: открывается по наведению и по нажатию, закрывается по второму нажатию или кликом мимо -->
-  <span ref="root" class="hint" :class="{ open }" @click.stop="open = !open" @mouseenter="open = true" @mouseleave="open = false">
+  <span
+    ref="root"
+    class="hint"
+    :class="{ open }"
+    @click.stop="open = !open"
+    @mouseenter="open = true"
+    @mouseleave="open = false"
+  >
     <span class="mark" aria-hidden="true">i</span>
     <span class="bubble" role="tooltip">{{ text }}</span>
   </span>
@@ -10,7 +17,7 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 
 defineProps({
-  text: { type: String, required: true }
+  text: { type: String, required: true },
 })
 
 const open = ref(false)

@@ -27,8 +27,13 @@ export function errorHandler(
 ): void {
   // Ошибки разбора тела запроса (express.json): некорректный JSON — это ошибка клиента, а не сервера
   const httpStatus = (err as any).status ?? (err as any).statusCode;
-  const isBodyParseError = (err as any).type === 'entity.parse.failed' || (err as any).type === 'entity.too.large';
-  const isClientHttpError = !(err instanceof AppError) && typeof httpStatus === 'number' && httpStatus >= 400 && httpStatus < 500;
+  const isBodyParseError =
+    (err as any).type === 'entity.parse.failed' || (err as any).type === 'entity.too.large';
+  const isClientHttpError =
+    !(err instanceof AppError) &&
+    typeof httpStatus === 'number' &&
+    httpStatus >= 400 &&
+    httpStatus < 500;
 
   // Extract error info
   const isAppError = err instanceof AppError;
@@ -56,7 +61,7 @@ export function errorHandler(
       code,
       path: req.path,
       method: req.method,
-      userId: req.user?.id
+      userId: req.user?.id,
     });
   } else {
     logger.warn(message, 'ErrorHandler', {
@@ -64,7 +69,7 @@ export function errorHandler(
       code,
       path: req.path,
       method: req.method,
-      userId: req.user?.id
+      userId: req.user?.id,
     });
   }
 
@@ -72,7 +77,7 @@ export function errorHandler(
   const response: any = {
     success: false,
     error: message,
-    code
+    code,
   };
 
   // Include details in development mode
@@ -113,6 +118,6 @@ export function notFound(req: Request, res: Response): void {
   res.status(404).json({
     success: false,
     error: `Route not found: ${req.method} ${req.path}`,
-    code: 'NOT_FOUND'
+    code: 'NOT_FOUND',
   });
 }

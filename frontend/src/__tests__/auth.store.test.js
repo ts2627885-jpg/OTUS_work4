@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 
 vi.mock('@/api/auth', () => ({
-  authAPI: { login: vi.fn(), register: vi.fn() }
+  authAPI: { login: vi.fn(), register: vi.fn() },
 }))
 
 import { authAPI } from '@/api/auth'
@@ -15,7 +15,7 @@ const memoryStorage = () => {
     getItem: (k) => (data.has(k) ? data.get(k) : null),
     setItem: (k, v) => data.set(k, String(v)),
     removeItem: (k) => data.delete(k),
-    clear: () => data.clear()
+    clear: () => data.clear(),
   }
 }
 
@@ -23,8 +23,8 @@ const loginResponse = {
   success: true,
   data: {
     token: { access_token: 'token-123', token_type: 'Bearer' },
-    user: { id: 'u1', username: 'admin', role: 'admin', permissions: ['*'] }
-  }
+    user: { id: 'u1', username: 'admin', role: 'admin', permissions: ['*'] },
+  },
 }
 
 describe('auth store', () => {
@@ -50,7 +50,10 @@ describe('auth store', () => {
 
   it('показывает текст ошибки backend при неверном пароле', async () => {
     authAPI.login.mockRejectedValue({
-      response: { status: 401, data: { success: false, error: 'Invalid credentials' } }
+      response: {
+        status: 401,
+        data: { success: false, error: 'Invalid credentials' },
+      },
     })
     const store = useAuthStore()
 

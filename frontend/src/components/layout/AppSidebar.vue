@@ -1,48 +1,96 @@
 <template>
   <aside class="app-sidebar" :class="{ collapsed }">
-    <button class="toggle" type="button" :title="collapsed ? 'Развернуть меню' : 'Свернуть меню'" @click="toggleCollapsed">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <button
+      class="toggle"
+      type="button"
+      :title="collapsed ? 'Развернуть меню' : 'Свернуть меню'"
+      @click="toggleCollapsed"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
         <path v-if="collapsed" d="M9 6l6 6-6 6" />
         <path v-else d="M15 6l-6 6 6 6" />
       </svg>
     </button>
     <nav class="sidebar-nav">
       <div class="nav-section">
-        <router-link to="/" class="nav-item" :class="{ active: isActive('/') }" title="Пульт: станции, рекомендации, срочное">
+        <router-link
+          to="/"
+          class="nav-item"
+          :class="{ active: isActive('/') }"
+          title="Пульт: станции, рекомендации, срочное"
+        >
           <span class="ico"><SidebarIcon name="pulse" /></span><span class="lbl">Пульт</span>
         </router-link>
       </div>
 
       <!-- Manager and above can see AZS -->
       <div v-if="canViewAzs" class="nav-section">
-        <router-link to="/azs" class="nav-item" :class="{ active: isActive('/azs') }" title="Список АЗС">
+        <router-link
+          to="/azs"
+          class="nav-item"
+          :class="{ active: isActive('/azs') }"
+          title="Список АЗС"
+        >
           <span class="ico"><SidebarIcon name="station" /></span><span class="lbl">Станции</span>
         </router-link>
       </div>
 
       <!-- Analyst and above can see recommendations -->
       <div v-if="canViewRecommendations" class="nav-section">
-        <router-link to="/recommendations" class="nav-item" :class="{ active: isActive('/recommendations') }" title="Рекомендации по правилам">
+        <router-link
+          to="/recommendations"
+          class="nav-item"
+          :class="{ active: isActive('/recommendations') }"
+          title="Рекомендации по правилам"
+        >
           <span class="ico"><SidebarIcon name="bulb" /></span><span class="lbl">Рекомендации</span>
         </router-link>
-        <router-link to="/analytics" class="nav-item" :class="{ active: isActive('/analytics') }" title="Аналитика: цены, конкуренты, трафик, объём, магазин, акции">
+        <router-link
+          to="/analytics"
+          class="nav-item"
+          :class="{ active: isActive('/analytics') }"
+          title="Аналитика: цены, конкуренты, трафик, объём, магазин, акции"
+        >
           <span class="ico"><SidebarIcon name="chart" /></span><span class="lbl">Аналитика</span>
         </router-link>
       </div>
 
       <!-- Admin and managers can import data -->
       <div v-if="canImportData" class="nav-section">
-        <router-link to="/import" class="nav-item" :class="{ active: isActive('/import') }" title="Импорт данных из CSV">
+        <router-link
+          to="/import"
+          class="nav-item"
+          :class="{ active: isActive('/import') }"
+          title="Импорт данных из CSV"
+        >
           <span class="ico"><SidebarIcon name="import" /></span><span class="lbl">Импорт</span>
         </router-link>
-        <router-link to="/data" class="nav-item" :class="{ active: isActive('/data') }" title="Периоды и источники данных">
+        <router-link
+          to="/data"
+          class="nav-item"
+          :class="{ active: isActive('/data') }"
+          title="Периоды и источники данных"
+        >
           <span class="ico"><SidebarIcon name="data" /></span><span class="lbl">Данные</span>
         </router-link>
       </div>
 
       <!-- Admin only -->
       <div v-if="authStore.isAdmin" class="nav-section">
-        <router-link to="/admin" class="nav-item" :class="{ active: isActive('/admin') }" title="Администрирование: пользователи, журналы, настройки расчёта, тест цен">
+        <router-link
+          to="/admin"
+          class="nav-item"
+          :class="{ active: isActive('/admin') }"
+          title="Администрирование: пользователи, журналы, настройки расчёта, тест цен"
+        >
           <span class="ico"><SidebarIcon name="settings" /></span><span class="lbl">Настройки</span>
         </router-link>
       </div>
@@ -78,17 +126,13 @@ const toggleCollapsed = () => {
   }
 }
 
-const canViewAzs = computed(() =>
-  authStore.hasPermission('azs_view_all') || authStore.hasPermission('azs_view_own')
+const canViewAzs = computed(
+  () => authStore.hasPermission('azs_view_all') || authStore.hasPermission('azs_view_own')
 )
 
-const canViewRecommendations = computed(() =>
-  authStore.hasPermission('recommendations_view')
-)
+const canViewRecommendations = computed(() => authStore.hasPermission('recommendations_view'))
 
-const canImportData = computed(() =>
-  authStore.hasPermission('data_import')
-)
+const canImportData = computed(() => authStore.hasPermission('data_import'))
 
 const isActive = (path) => {
   return route.path === path || route.path.startsWith(path + '/')
@@ -143,7 +187,10 @@ const isActive = (path) => {
   background: var(--side-tile);
   font-size: 1.15rem;
   line-height: 1;
-  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .lbl {

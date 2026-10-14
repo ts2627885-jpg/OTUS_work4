@@ -9,14 +9,16 @@ import { getPool } from '@config/database';
 import { logger } from '@utils/logger';
 
 export interface PublicSyncResult {
-  added: string[];    // названия АЗС, появившиеся в приложении
-  removed: string[];  // названия АЗС, удалённые из приложения (нет в аналитике)
-  total: number;      // всего АЗС в приложении после синхронизации
+  added: string[]; // названия АЗС, появившиеся в приложении
+  removed: string[]; // названия АЗС, удалённые из приложения (нет в аналитике)
+  total: number; // всего АЗС в приложении после синхронизации
 }
 
 // backend/src/services -> корень azs-pult-fullstack (то же и из dist/services)
 // В контейнере файл лежит в другом месте: путь задаётся переменной SYNC_PUBLIC_SQL
-const SYNC_SQL = process.env.SYNC_PUBLIC_SQL || path.resolve(__dirname, '../../../_data/_BD/pipeline/sync_public.sql');
+const SYNC_SQL =
+  process.env.SYNC_PUBLIC_SQL ||
+  path.resolve(__dirname, '../../../_data/_BD/pipeline/sync_public.sql');
 
 async function appStationNames(): Promise<string[]> {
   const { rows } = await getPool().query(`SELECT name FROM public.azs ORDER BY name`);
@@ -42,7 +44,7 @@ export async function syncPublic(): Promise<PublicSyncResult> {
   const result: PublicSyncResult = {
     added: after.filter((n) => !before.has(n)),
     removed: [...before].filter((n) => !afterSet.has(n)),
-    total: after.length
+    total: after.length,
   };
   logger.info('Синхронизация public выполнена', 'SYNC', result);
   return result;

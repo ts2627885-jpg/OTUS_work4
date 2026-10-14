@@ -63,13 +63,13 @@
 
   /* Ячейки без подписи (заглушки, колонка действий без заголовка) — на всю ширину */
   td:not([data-label]),
-  td[data-label=""] {
+  td[data-label=''] {
     display: block;
     text-align: left;
   }
 
   td:not([data-label])::before,
-  td[data-label=""]::before {
+  td[data-label='']::before {
     content: none;
   }
 

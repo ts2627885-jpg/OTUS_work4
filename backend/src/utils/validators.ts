@@ -12,7 +12,7 @@ import * as Joi from 'joi';
 export const authValidators = {
   login: Joi.object({
     username: Joi.string().alphanum().min(3).max(30).required(),
-    password: Joi.string().min(6).max(128).required()
+    password: Joi.string().min(6).max(128).required(),
   }),
 
   register: Joi.object({
@@ -24,9 +24,10 @@ export const authValidators = {
       .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
       .required()
       .messages({
-        'string.pattern.base': 'Password must contain uppercase, lowercase, number, and special character'
-      })
-  })
+        'string.pattern.base':
+          'Password must contain uppercase, lowercase, number, and special character',
+      }),
+  }),
 };
 
 /**
@@ -38,7 +39,7 @@ export const azsValidators = {
     location_region: Joi.string().min(2).max(50).required(),
     latitude: Joi.number().min(-90).max(90).optional(),
     longitude: Joi.number().min(-180).max(180).optional(),
-    manager_id: Joi.string().uuid().optional()
+    manager_id: Joi.string().uuid().optional(),
   }),
 
   update: Joi.object({
@@ -46,8 +47,8 @@ export const azsValidators = {
     location_region: Joi.string().min(2).max(50).optional(),
     latitude: Joi.number().min(-90).max(90).optional(),
     longitude: Joi.number().min(-180).max(180).optional(),
-    is_active: Joi.boolean().optional()
-  })
+    is_active: Joi.boolean().optional(),
+  }),
 };
 
 /**
@@ -57,8 +58,8 @@ export const priceValidators = {
   updatePrice: Joi.object({
     fuel_type: Joi.string().valid('AI-92', 'AI-95', 'AI-98', 'Diesel').required(),
     price: Joi.number().positive().max(1000).required(),
-    effective_from: Joi.date().iso().optional()
-  })
+    effective_from: Joi.date().iso().optional(),
+  }),
 };
 
 /**
@@ -69,8 +70,8 @@ export const paginationValidators = {
     limit: Joi.number().integer().min(1).max(100).default(20),
     offset: Joi.number().integer().min(0).default(0),
     sort_by: Joi.string().optional(),
-    sort_order: Joi.string().valid('asc', 'desc').default('asc')
-  })
+    sort_order: Joi.string().valid('asc', 'desc').default('asc'),
+  }),
 };
 
 /**
@@ -84,16 +85,20 @@ export async function validate<T>(
   const { value, error } = schema.validate(data, {
     abortEarly: false,
     stripUnknown: true,
-    ...options
+    ...options,
   });
 
   if (error) {
-    const details = error.details.map(detail => ({
+    const details = error.details.map((detail) => ({
       field: detail.path.join('.'),
-      message: detail.message
+      message: detail.message,
     }));
     // 400 с понятным текстом вместо 500 (обработчик ошибок берёт statusCode из ValidationError)
-    throw new ValidationError(details.map(d => d.message).join('; '), 'VALIDATION_ERROR', details);
+    throw new ValidationError(
+      details.map((d) => d.message).join('; '),
+      'VALIDATION_ERROR',
+      details
+    );
   }
 
   return value as T;

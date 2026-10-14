@@ -8,7 +8,14 @@ const EMPTY = { success: true, data: [] }
 const WRITE_OK = { success: true, data: null, mock: true }
 
 const respond = (config, data, status = 200) =>
-  Promise.resolve({ data, status, statusText: 'OK', headers: {}, config, request: {} })
+  Promise.resolve({
+    data,
+    status,
+    statusText: 'OK',
+    headers: {},
+    config,
+    request: {},
+  })
 
 export default function mockAdapter(config) {
   const method = (config.method || 'get').toUpperCase()

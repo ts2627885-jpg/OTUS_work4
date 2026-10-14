@@ -55,14 +55,10 @@
             required
             :disabled="authStore.loading"
           />
-          <span v-if="passwordMismatch" class="error-text">
-            ❌ Пароли не совпадают
-          </span>
+          <span v-if="passwordMismatch" class="error-text"> ❌ Пароли не совпадают </span>
         </div>
 
-        <div v-if="authStore.error" class="error-message">
-          ❌ {{ authStore.error }}
-        </div>
+        <div v-if="authStore.error" class="error-message">❌ {{ authStore.error }}</div>
 
         <button
           type="submit"
@@ -94,23 +90,19 @@ const formData = reactive({
   username: '',
   email: '',
   password: '',
-  passwordConfirm: ''
+  passwordConfirm: '',
 })
 
-const passwordMismatch = computed(() =>
-  formData.password && formData.passwordConfirm &&
-  formData.password !== formData.passwordConfirm
+const passwordMismatch = computed(
+  () =>
+    formData.password && formData.passwordConfirm && formData.password !== formData.passwordConfirm
 )
 
 const handleRegister = async () => {
   if (passwordMismatch.value) return
 
   try {
-    await authStore.register(
-      formData.username,
-      formData.email,
-      formData.password
-    )
+    await authStore.register(formData.username, formData.email, formData.password)
     router.push({ name: 'Dashboard' })
   } catch (err) {
     console.error('Registration error:', err)

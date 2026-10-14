@@ -10,17 +10,21 @@
 import { computed } from 'vue'
 
 const props = defineProps({
-  kind: { type: String, default: 'empty', validator: v => ['loading', 'empty', 'error'].includes(v) },
-  text: { type: String, default: '' }
+  kind: {
+    type: String,
+    default: 'empty',
+    validator: (v) => ['loading', 'empty', 'error'].includes(v),
+  },
+  text: { type: String, default: '' },
 })
 
 const defaults = {
   loading: 'Загрузка...',
   empty: 'Данных недостаточно для расчёта',
-  error: 'Не удалось загрузить данные'
+  error: 'Не удалось загрузить данные',
 }
 
-const icon = computed(() => ({ loading: '…', empty: '○', error: '!' }[props.kind]))
+const icon = computed(() => ({ loading: '…', empty: '○', error: '!' })[props.kind])
 </script>
 
 <style scoped>

@@ -59,7 +59,7 @@ class Logger {
       timestamp: new Date().toISOString(),
       level,
       message,
-      context
+      context,
     };
 
     if (data) {
@@ -70,7 +70,7 @@ class Logger {
       entry.error = {
         name: error.name,
         message: error.message,
-        stack: this.isDevelopment ? error.stack : undefined
+        stack: this.isDevelopment ? error.stack : undefined,
       };
     }
 
@@ -88,9 +88,9 @@ class Logger {
       // Development: pretty print
       const levelColors = {
         debug: '\x1b[36m', // cyan
-        info: '\x1b[32m',  // green
-        warn: '\x1b[33m',  // yellow
-        error: '\x1b[31m'  // red
+        info: '\x1b[32m', // green
+        warn: '\x1b[33m', // yellow
+        error: '\x1b[31m', // red
       };
       const reset = '\x1b[0m';
       const color = levelColors[level];
@@ -155,7 +155,10 @@ class Logger {
    */
   query(query: string, params?: unknown[], duration?: number): void {
     if (this.isDevelopment) {
-      this.debug(`Query executed${duration !== undefined ? ` in ${duration}ms` : ''}`, 'DATABASE', { query, params });
+      this.debug(`Query executed${duration !== undefined ? ` in ${duration}ms` : ''}`, 'DATABASE', {
+        query,
+        params,
+      });
     }
   }
 

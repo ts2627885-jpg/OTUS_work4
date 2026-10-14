@@ -31,28 +31,27 @@
           />
         </div>
 
-        <div v-if="authStore.error" class="error-message">
-          ❌ {{ authStore.error }}
-        </div>
+        <div v-if="authStore.error" class="error-message">❌ {{ authStore.error }}</div>
 
-        <button
-          type="submit"
-          class="login-btn"
-          :disabled="authStore.loading"
-        >
+        <button type="submit" class="login-btn" :disabled="authStore.loading">
           <span v-if="!authStore.loading">Войти</span>
           <span v-else>Вход в систему...</span>
         </button>
       </form>
 
       <div class="login-footer">
-        <p>Нет аккаунта? <router-link to="/register">Зарегистрироваться</router-link></p>
-        <hr />
-        <p class="demo-info">
-          💡 Демо учетные данные:<br />
-          Логин: <code>admin</code><br />
-          Пароль: <code>Admin123456</code>
+        <p>
+          Нет аккаунта?
+          <router-link to="/register">Зарегистрироваться</router-link>
         </p>
+        <template v-if="showDemoHint">
+          <hr />
+          <p class="demo-info">
+            💡 Демо учетные данные:<br />
+            Логин: <code>admin</code><br />
+            Пароль: <code>Admin123456</code>
+          </p>
+        </template>
       </div>
     </div>
   </div>
@@ -67,9 +66,12 @@ import LogoMark from '@/components/layout/LogoMark.vue'
 const router = useRouter()
 const authStore = useAuthStore()
 
+// Демо-учётка показывается только в mock-режиме (npm run dev:mock), не в боевой сборке
+const showDemoHint = import.meta.env.VITE_USE_MOCKS === 'true'
+
 const formData = reactive({
   username: '',
-  password: ''
+  password: '',
 })
 
 const handleLogin = async () => {

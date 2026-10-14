@@ -5,7 +5,7 @@ let authToken = '';
 
 const client = axios.create({
   baseURL: BASE_URL,
-  validateStatus: () => true // Don't throw on any status
+  validateStatus: () => true, // Don't throw on any status
 });
 
 async function runTests() {
@@ -16,7 +16,7 @@ async function runTests() {
     console.log('1️⃣ Testing Login...');
     const loginRes = await client.post('/auth/login', {
       username: 'admin',
-      password: 'Admin123456'
+      password: 'Admin123456',
     });
 
     if (loginRes.status === 200 && loginRes.data.data.token.access_token) {

@@ -77,7 +77,11 @@ export class ConflictError extends AppError {
  * Internal server error
  */
 export class InternalServerError extends AppError {
-  constructor(message: string = 'Internal server error', code: string = 'INTERNAL_ERROR', details?: any) {
+  constructor(
+    message: string = 'Internal server error',
+    code: string = 'INTERNAL_ERROR',
+    details?: any
+  ) {
     super(500, message, code, details);
     this.name = 'InternalServerError';
     Object.setPrototypeOf(this, InternalServerError.prototype);

@@ -34,13 +34,11 @@ describe('Authentication Endpoints', () => {
 
   describe('POST /api/auth/register', () => {
     it('should register new user with valid data', async () => {
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send({
-          username: 'testuser123',
-          email: 'test@example.com',
-          password: 'TestPassword123!'
-        });
+      const response = await request(app).post('/api/auth/register').send({
+        username: 'testuser123',
+        email: 'test@example.com',
+        password: 'TestPassword123!',
+      });
 
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
@@ -51,26 +49,22 @@ describe('Authentication Endpoints', () => {
     });
 
     it('should return 400 for invalid email', async () => {
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send({
-          username: 'testuser',
-          email: 'invalid-email',
-          password: 'TestPassword123!'
-        });
+      const response = await request(app).post('/api/auth/register').send({
+        username: 'testuser',
+        email: 'invalid-email',
+        password: 'TestPassword123!',
+      });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
 
     it('should return 400 for weak password', async () => {
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send({
-          username: 'testuser',
-          email: 'test@example.com',
-          password: 'weak'
-        });
+      const response = await request(app).post('/api/auth/register').send({
+        username: 'testuser',
+        email: 'test@example.com',
+        password: 'weak',
+      });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -78,22 +72,18 @@ describe('Authentication Endpoints', () => {
 
     it('should return 409 if username already exists', async () => {
       // First registration
-      await request(app)
-        .post('/api/auth/register')
-        .send({
-          username: 'duplicate',
-          email: 'email1@example.com',
-          password: 'TestPassword123!'
-        });
+      await request(app).post('/api/auth/register').send({
+        username: 'duplicate',
+        email: 'email1@example.com',
+        password: 'TestPassword123!',
+      });
 
       // Duplicate registration
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send({
-          username: 'duplicate',
-          email: 'email2@example.com',
-          password: 'TestPassword123!'
-        });
+      const response = await request(app).post('/api/auth/register').send({
+        username: 'duplicate',
+        email: 'email2@example.com',
+        password: 'TestPassword123!',
+      });
 
       expect(response.status).toBe(409);
       expect(response.body.success).toBe(false);
@@ -103,22 +93,18 @@ describe('Authentication Endpoints', () => {
   describe('POST /api/auth/login', () => {
     beforeEach(async () => {
       // Create test user
-      await request(app)
-        .post('/api/auth/register')
-        .send({
-          username: 'logintest',
-          email: 'login@example.com',
-          password: 'TestPassword123!'
-        });
+      await request(app).post('/api/auth/register').send({
+        username: 'logintest',
+        email: 'login@example.com',
+        password: 'TestPassword123!',
+      });
     });
 
     it('should login with correct credentials', async () => {
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send({
-          username: 'logintest',
-          password: 'TestPassword123!'
-        });
+      const response = await request(app).post('/api/auth/login').send({
+        username: 'logintest',
+        password: 'TestPassword123!',
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -129,24 +115,20 @@ describe('Authentication Endpoints', () => {
     });
 
     it('should return 401 with wrong password', async () => {
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send({
-          username: 'logintest',
-          password: 'WrongPassword123!'
-        });
+      const response = await request(app).post('/api/auth/login').send({
+        username: 'logintest',
+        password: 'WrongPassword123!',
+      });
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
     });
 
     it('should return 401 if user not found', async () => {
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send({
-          username: 'nonexistent',
-          password: 'Password123!'
-        });
+      const response = await request(app).post('/api/auth/login').send({
+        username: 'nonexistent',
+        password: 'Password123!',
+      });
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -158,13 +140,11 @@ describe('Authentication Endpoints', () => {
 
     beforeEach(async () => {
       // Register and get token
-      const registerResponse = await request(app)
-        .post('/api/auth/register')
-        .send({
-          username: 'profiletest',
-          email: 'profile@example.com',
-          password: 'TestPassword123!'
-        });
+      const registerResponse = await request(app).post('/api/auth/register').send({
+        username: 'profiletest',
+        email: 'profile@example.com',
+        password: 'TestPassword123!',
+      });
 
       token = registerResponse.body.data.token.access_token;
     });
@@ -182,8 +162,7 @@ describe('Authentication Endpoints', () => {
     });
 
     it('should return 401 without token', async () => {
-      const response = await request(app)
-        .get('/api/auth/profile');
+      const response = await request(app).get('/api/auth/profile');
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -199,9 +178,7 @@ describe('Authentication Endpoints', () => {
     });
 
     it('should return 401 with missing Bearer prefix', async () => {
-      const response = await request(app)
-        .get('/api/auth/profile')
-        .set('Authorization', token);
+      const response = await request(app).get('/api/auth/profile').set('Authorization', token);
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -212,13 +189,11 @@ describe('Authentication Endpoints', () => {
     let token: string;
 
     beforeEach(async () => {
-      const registerResponse = await request(app)
-        .post('/api/auth/register')
-        .send({
-          username: 'refreshtest',
-          email: 'refresh@example.com',
-          password: 'TestPassword123!'
-        });
+      const registerResponse = await request(app).post('/api/auth/register').send({
+        username: 'refreshtest',
+        email: 'refresh@example.com',
+        password: 'TestPassword123!',
+      });
 
       token = registerResponse.body.data.token.access_token;
     });
@@ -239,8 +214,7 @@ describe('Authentication Endpoints', () => {
     });
 
     it('should return 401 without token', async () => {
-      const response = await request(app)
-        .post('/api/auth/refresh');
+      const response = await request(app).post('/api/auth/refresh');
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -251,13 +225,11 @@ describe('Authentication Endpoints', () => {
     let token: string;
 
     beforeEach(async () => {
-      const registerResponse = await request(app)
-        .post('/api/auth/register')
-        .send({
-          username: 'logouttest',
-          email: 'logout@example.com',
-          password: 'TestPassword123!'
-        });
+      const registerResponse = await request(app).post('/api/auth/register').send({
+        username: 'logouttest',
+        email: 'logout@example.com',
+        password: 'TestPassword123!',
+      });
 
       token = registerResponse.body.data.token.access_token;
     });
@@ -272,8 +244,7 @@ describe('Authentication Endpoints', () => {
     });
 
     it('should return 401 without token', async () => {
-      const response = await request(app)
-        .post('/api/auth/logout');
+      const response = await request(app).post('/api/auth/logout');
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);

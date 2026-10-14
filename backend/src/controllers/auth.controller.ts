@@ -25,16 +25,13 @@ export class AuthController {
 
     logger.auth('Login attempt', { username: validated.username });
 
-    const result = await this.authService.login(
-      validated.username,
-      validated.password
-    );
+    const result = await this.authService.login(validated.username, validated.password);
 
     logger.info(`User logged in: ${result.user.id}`, 'AuthController');
 
     res.status(200).json({
       success: true,
-      data: result
+      data: result,
     });
   }
 
@@ -53,7 +50,7 @@ export class AuthController {
 
     res.status(201).json({
       success: true,
-      data: result
+      data: result,
     });
   }
 
@@ -68,7 +65,7 @@ export class AuthController {
     if (!userId) {
       res.status(401).json({
         success: false,
-        error: 'Not authenticated'
+        error: 'Not authenticated',
       });
       return;
     }
@@ -77,7 +74,7 @@ export class AuthController {
 
     res.status(200).json({
       success: true,
-      message: 'Logged out successfully'
+      message: 'Logged out successfully',
     });
   }
 
@@ -92,7 +89,7 @@ export class AuthController {
     if (!userId) {
       res.status(401).json({
         success: false,
-        error: 'Not authenticated'
+        error: 'Not authenticated',
       });
       return;
     }
@@ -101,7 +98,7 @@ export class AuthController {
 
     res.status(200).json({
       success: true,
-      data: user
+      data: user,
     });
   }
 
@@ -116,7 +113,7 @@ export class AuthController {
     if (!userId) {
       res.status(401).json({
         success: false,
-        error: 'Not authenticated'
+        error: 'Not authenticated',
       });
       return;
     }
@@ -125,7 +122,7 @@ export class AuthController {
 
     res.status(200).json({
       success: true,
-      data: newToken
+      data: newToken,
     });
   }
 }

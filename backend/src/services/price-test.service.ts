@@ -39,15 +39,27 @@ export async function buildDraftPlan(userId: string | null, seed = 42) {
        FROM azs.fuel_daily WHERE price IS NOT NULL AND price > 0
       ORDER BY station_code, fuel_code, sale_date DESC`
   );
-  const { rows: [{ as_of }] } = await pool.query(`SELECT max(sale_date)::text AS as_of FROM azs.fuel_daily WHERE price IS NOT NULL`);
+  const {
+    rows: [{ as_of }],
+  } = await pool.query(
+    `SELECT max(sale_date)::text AS as_of FROM azs.fuel_daily WHERE price IS NOT NULL`
+  );
   const rand = rng(seed);
   const start = new Date(`${as_of}T00:00:00Z`);
   start.setUTCDate(start.getUTCDate() + 1);
 
   // уровни: каждый уровень дважды на пару станция–топливо, порядок случайный
-  const plan: { station_code: string; fuel_code: string; block_no: number; start: string; end: string;
-                base: number; offset: number; target: number }[] = [];
-  const perPair = prices.map(p => ({ ...p, levels: shuffle([...LEVELS, ...LEVELS], rand) }));
+  const plan: {
+    station_code: string;
+    fuel_code: string;
+    block_no: number;
+    start: string;
+    end: string;
+    base: number;
+    offset: number;
+    target: number;
+  }[] = [];
+  const perPair = prices.map((p) => ({ ...p, levels: shuffle([...LEVELS, ...LEVELS], rand) }));
   for (const p of perPair) {
     // каждый блок — свой уровень из списка; сдвиг по времени, чтобы блоки не совпадали по дням
     for (let b = 0; b < BLOCKS; b++) {
@@ -57,9 +69,14 @@ export async function buildDraftPlan(userId: string | null, seed = 42) {
       const e = new Date(s);
       e.setUTCDate(e.getUTCDate() + BLOCK_DAYS - 1);
       plan.push({
-        station_code: p.station_code, fuel_code: p.fuel_code, block_no: b + 1,
-        start: s.toISOString().slice(0, 10), end: e.toISOString().slice(0, 10),
-        base: p.price, offset, target: Math.round((p.price + offset) * 100) / 100
+        station_code: p.station_code,
+        fuel_code: p.fuel_code,
+        block_no: b + 1,
+        start: s.toISOString().slice(0, 10),
+        end: e.toISOString().slice(0, 10),
+        base: p.price,
+        offset,
+        target: Math.round((p.price + offset) * 100) / 100,
       });
     }
   }
@@ -75,7 +92,17 @@ export async function buildDraftPlan(userId: string | null, seed = 42) {
          VALUES ($1,
                  (SELECT a.id FROM public.azs a JOIN azs.station s ON s.station_name = a.name WHERE s.station_code = $1 LIMIT 1),
                  $2, $3, $4, $5, $6, $7, $8, $9)`,
-        [r.station_code, r.fuel_code, r.block_no, r.start, r.end, r.base, r.offset, r.target, userId]
+        [
+          r.station_code,
+          r.fuel_code,
+          r.block_no,
+          r.start,
+          r.end,
+          r.base,
+          r.offset,
+          r.target,
+          userId,
+        ]
       );
     }
     await client.query('COMMIT');
@@ -85,5 +112,12 @@ export async function buildDraftPlan(userId: string | null, seed = 42) {
   } finally {
     client.release();
   }
-  return { rows: plan.length, pairs: prices.length, blocks: BLOCKS, blockDays: BLOCK_DAYS, levels: LEVELS, startDate: start.toISOString().slice(0, 10) };
+  return {
+    rows: plan.length,
+    pairs: prices.length,
+    blocks: BLOCKS,
+    blockDays: BLOCK_DAYS,
+    levels: LEVELS,
+    startDate: start.toISOString().slice(0, 10),
+  };
 }

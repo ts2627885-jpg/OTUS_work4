@@ -14,7 +14,8 @@ import { logger } from '@utils/logger';
 
 export function dbContextMiddleware(): RequestHandler {
   return (_req: Request, res: Response, next: NextFunction): void => {
-    getRawPool().connect()
+    getRawPool()
+      .connect()
       .then(async (client: PoolClient) => {
         let released = false;
 
@@ -26,7 +27,11 @@ export function dbContextMiddleware(): RequestHandler {
             await client.query('RESET app.role; RESET app.user_id');
             client.release();
           } catch (error) {
-            logger.error('Failed to reset DB context, dropping connection', error as Error, 'DbContext');
+            logger.error(
+              'Failed to reset DB context, dropping connection',
+              error as Error,
+              'DbContext'
+            );
             client.release(error as Error);
           }
         };
@@ -34,7 +39,9 @@ export function dbContextMiddleware(): RequestHandler {
         res.on('close', release);
 
         try {
-          await client.query("SELECT set_config('app.role', 'anonymous', false), set_config('app.user_id', '', false)");
+          await client.query(
+            "SELECT set_config('app.role', 'anonymous', false), set_config('app.user_id', '', false)"
+          );
         } catch (error) {
           await release();
           throw error;

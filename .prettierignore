@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+backups/
+logs/
+out/
+_data/
+.agents/
+.claude/
+*.min.js
+package-lock.json

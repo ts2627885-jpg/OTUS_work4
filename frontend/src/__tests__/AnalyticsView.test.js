@@ -4,7 +4,9 @@ import { createPinia, setActivePinia } from 'pinia'
 
 vi.mock('@/api/client', () => ({ default: { get: vi.fn(), post: vi.fn() } }))
 vi.mock('@/api/azs', () => ({ azsAPI: { getAll: vi.fn() } }))
-vi.mock('@/components/charts/SeriesChart.vue', () => ({ default: { render: () => null } }))
+vi.mock('@/components/charts/SeriesChart.vue', () => ({
+  default: { render: () => null },
+}))
 
 import client from '@/api/client'
 import { azsAPI } from '@/api/azs'
@@ -19,12 +21,19 @@ describe('AnalyticsView (аналитика)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     setActivePinia(createPinia())
-    azsAPI.getAll.mockResolvedValue({ data: { data: [{ id: 'id-121', name: 'АЗС 121' }] } })
+    azsAPI.getAll.mockResolvedValue({
+      data: { data: [{ id: 'id-121', name: 'АЗС 121' }] },
+    })
   })
 
   it('загружает вкладку «Ценовая политика» и выводит разделы из ответа', async () => {
     client.get.mockResolvedValue({
-      data: { data: { asOf: '2026-09-21', sections: [section('Симулятор цены'), section('Текущие цены')] } }
+      data: {
+        data: {
+          asOf: '2026-09-21',
+          sections: [section('Симулятор цены'), section('Текущие цены')],
+        },
+      },
     })
 
     const wrapper = mountView()
@@ -36,7 +45,9 @@ describe('AnalyticsView (аналитика)', () => {
   })
 
   it('переключение вкладки запрашивает данные этой вкладки', async () => {
-    client.get.mockResolvedValue({ data: { data: { asOf: '2026-09-21', sections: [] } } })
+    client.get.mockResolvedValue({
+      data: { data: { asOf: '2026-09-21', sections: [] } },
+    })
 
     const wrapper = mountView()
     await flushPromises()
@@ -47,7 +58,9 @@ describe('AnalyticsView (аналитика)', () => {
   })
 
   it('при ошибке сервера показывает сообщение и не падает', async () => {
-    client.get.mockRejectedValue({ response: { data: { error: 'Расчёт временно недоступен' } } })
+    client.get.mockRejectedValue({
+      response: { data: { error: 'Расчёт временно недоступен' } },
+    })
 
     const wrapper = mountView()
     await flushPromises()
@@ -56,7 +69,9 @@ describe('AnalyticsView (аналитика)', () => {
   })
 
   it('для вкладки по станции запрос содержит azsId выбранной станции', async () => {
-    client.get.mockResolvedValue({ data: { data: { asOf: '2026-09-21', sections: [] } } })
+    client.get.mockResolvedValue({
+      data: { data: { asOf: '2026-09-21', sections: [] } },
+    })
 
     const wrapper = mountView()
     await flushPromises()

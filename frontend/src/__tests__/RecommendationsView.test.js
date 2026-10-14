@@ -3,7 +3,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 
 vi.mock('@/api/client', () => ({
-  default: { get: vi.fn(), post: vi.fn() }
+  default: { get: vi.fn(), post: vi.fn() },
 }))
 
 import client from '@/api/client'
@@ -20,13 +20,13 @@ const recommendation = {
   fuel: 'AI95',
   action: 'Ориентир 71,45 ₽/л',
   effect: 'не рассчитан: нет продаж',
-  reason: 'тест'
+  reason: 'тест',
 }
 
 const analysis = {
   asOfDate: '2026-09-21',
   windows: { competitorDays: 14, elasticityDays: 365, r2Min: 0.36 },
-  notComputed: []
+  notComputed: [],
 }
 
 // Ответы по адресам API: список рекомендаций и правила расчёта
@@ -45,13 +45,17 @@ describe('RecommendationsView', () => {
     vi.clearAllMocks()
     setActivePinia(createPinia())
     // роль администратора: доступна кнопка «Сформировать»
-    useAuthStore().user = { username: 'admin', role: 'admin', permissions: ['*'] }
+    useAuthStore().user = {
+      username: 'admin',
+      role: 'admin',
+      permissions: ['*'],
+    }
   })
 
   it('показывает рекомендации и станцию из ответа API', async () => {
     respondTo({
       recs: Promise.resolve({ data: { data: [recommendation] } }),
-      rules: Promise.resolve({ data: { data: analysis } })
+      rules: Promise.resolve({ data: { data: analysis } }),
     })
 
     const wrapper = mountView()
@@ -64,8 +68,10 @@ describe('RecommendationsView', () => {
 
   it('показывает понятную ошибку, если сервер не отвечает', async () => {
     respondTo({
-      recs: Promise.reject({ response: { data: { error: 'Сервер недоступен' } } }),
-      rules: Promise.resolve({ data: { data: analysis } })
+      recs: Promise.reject({
+        response: { data: { error: 'Сервер недоступен' } },
+      }),
+      rules: Promise.resolve({ data: { data: analysis } }),
     })
 
     const wrapper = mountView()
@@ -78,7 +84,7 @@ describe('RecommendationsView', () => {
   it('кнопка «Сформировать» сообщает, сколько рекомендаций сохранено', async () => {
     respondTo({
       recs: Promise.resolve({ data: { data: [] } }),
-      rules: Promise.resolve({ data: { data: analysis } })
+      rules: Promise.resolve({ data: { data: analysis } }),
     })
     client.post.mockResolvedValue({ data: { data: { saved: 3, closed: 1 } } })
 

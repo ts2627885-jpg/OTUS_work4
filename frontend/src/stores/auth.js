@@ -4,7 +4,10 @@ import { authAPI } from '@/api/auth'
 import { errorMessage } from '@/composables/useRequest'
 
 // Ошибки входа и регистрации: неверные данные (401) показываем понятно, остальное — общим способом
-const authErrorMessage = (err, fallback) => (err.response?.status === 401 ? 'Неверное имя пользователя или пароль.' : errorMessage(err) || fallback)
+const authErrorMessage = (err, fallback) =>
+  err.response?.status === 401
+    ? 'Неверное имя пользователя или пароль.'
+    : errorMessage(err) || fallback
 
 export const useAuthStore = defineStore('auth', () => {
   // State
@@ -26,7 +29,7 @@ export const useAuthStore = defineStore('auth', () => {
     admin: ['*'],
     manager: ['azs_view_all', 'azs_view_own', 'recommendations_view', 'data_import'],
     analyst: ['azs_view_all', 'recommendations_view'],
-    viewer: ['azs_view_all', 'recommendations_view']
+    viewer: ['azs_view_all', 'recommendations_view'],
   }
 
   const hasPermission = (permission) => {
@@ -125,6 +128,6 @@ export const useAuthStore = defineStore('auth', () => {
     register,
     login,
     logout,
-    restoreFromStorage
+    restoreFromStorage,
   }
 })

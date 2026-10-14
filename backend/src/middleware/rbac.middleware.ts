@@ -25,7 +25,7 @@ enum RoleId {
   ADMIN = 1,
   MANAGER = 2,
   ANALYST = 3,
-  VIEWER = 4
+  VIEWER = 4,
 }
 
 /**
@@ -34,38 +34,38 @@ enum RoleId {
  */
 const permissionMap: Record<string, RoleId[]> = {
   // User management (admin only)
-  'users_list': [RoleId.ADMIN],
-  'users_create': [RoleId.ADMIN],
-  'users_update': [RoleId.ADMIN],
-  'users_delete': [RoleId.ADMIN],
-  'users_manage': [RoleId.ADMIN],
+  users_list: [RoleId.ADMIN],
+  users_create: [RoleId.ADMIN],
+  users_update: [RoleId.ADMIN],
+  users_delete: [RoleId.ADMIN],
+  users_manage: [RoleId.ADMIN],
 
   // AZS management (admin, manager)
-  'azs_list': [RoleId.ADMIN, RoleId.MANAGER, RoleId.ANALYST, RoleId.VIEWER],
-  'azs_view': [RoleId.ADMIN, RoleId.MANAGER, RoleId.ANALYST, RoleId.VIEWER],
-  'azs_create': [RoleId.ADMIN, RoleId.MANAGER],
-  'azs_update': [RoleId.ADMIN, RoleId.MANAGER],
-  'azs_delete': [RoleId.ADMIN, RoleId.MANAGER],
+  azs_list: [RoleId.ADMIN, RoleId.MANAGER, RoleId.ANALYST, RoleId.VIEWER],
+  azs_view: [RoleId.ADMIN, RoleId.MANAGER, RoleId.ANALYST, RoleId.VIEWER],
+  azs_create: [RoleId.ADMIN, RoleId.MANAGER],
+  azs_update: [RoleId.ADMIN, RoleId.MANAGER],
+  azs_delete: [RoleId.ADMIN, RoleId.MANAGER],
 
   // Price management (admin, manager)
-  'prices_view': [RoleId.ADMIN, RoleId.MANAGER, RoleId.ANALYST, RoleId.VIEWER],
-  'prices_update': [RoleId.ADMIN, RoleId.MANAGER],
-  'prices_import': [RoleId.ADMIN, RoleId.MANAGER],
+  prices_view: [RoleId.ADMIN, RoleId.MANAGER, RoleId.ANALYST, RoleId.VIEWER],
+  prices_update: [RoleId.ADMIN, RoleId.MANAGER],
+  prices_import: [RoleId.ADMIN, RoleId.MANAGER],
 
   // Recommendations (admin, manager, analyst)
-  'recommendations_view': [RoleId.ADMIN, RoleId.MANAGER, RoleId.ANALYST],
-  'recommendations_generate': [RoleId.ADMIN, RoleId.MANAGER, RoleId.ANALYST],
+  recommendations_view: [RoleId.ADMIN, RoleId.MANAGER, RoleId.ANALYST],
+  recommendations_generate: [RoleId.ADMIN, RoleId.MANAGER, RoleId.ANALYST],
 
   // Reports (admin, manager, analyst)
-  'reports_view': [RoleId.ADMIN, RoleId.MANAGER, RoleId.ANALYST],
-  'reports_export': [RoleId.ADMIN, RoleId.MANAGER, RoleId.ANALYST],
+  reports_view: [RoleId.ADMIN, RoleId.MANAGER, RoleId.ANALYST],
+  reports_export: [RoleId.ADMIN, RoleId.MANAGER, RoleId.ANALYST],
 
   // Logs (admin only)
-  'logs_view': [RoleId.ADMIN],
-  'logs_export': [RoleId.ADMIN],
+  logs_view: [RoleId.ADMIN],
+  logs_export: [RoleId.ADMIN],
 
   // Dashboard (all authenticated users)
-  'dashboard_view': [RoleId.ADMIN, RoleId.MANAGER, RoleId.ANALYST, RoleId.VIEWER],
+  dashboard_view: [RoleId.ADMIN, RoleId.MANAGER, RoleId.ANALYST, RoleId.VIEWER],
 };
 
 /**
@@ -96,24 +96,19 @@ export function authorize(requiredPermission: string) {
 
       // Check if user's role has permission
       if (!allowedRoles.includes(req.user.role_id)) {
-        logger.warn(
-          `Authorize: insufficient permissions`,
-          'RBACMiddleware',
-          {
-            userId: req.user.id,
-            userRole: req.user.role_id,
-            requiredPermission,
-            allowedRoles
-          }
-        );
+        logger.warn(`Authorize: insufficient permissions`, 'RBACMiddleware', {
+          userId: req.user.id,
+          userRole: req.user.role_id,
+          requiredPermission,
+          allowedRoles,
+        });
         throw new AuthorizationError(`Insufficient permissions for: ${requiredPermission}`);
       }
 
-      logger.debug(
-        `Authorization successful`,
-        'RBACMiddleware',
-        { userId: req.user.id, permission: requiredPermission }
-      );
+      logger.debug(`Authorization successful`, 'RBACMiddleware', {
+        userId: req.user.id,
+        permission: requiredPermission,
+      });
 
       next();
     } catch (error) {
@@ -121,13 +116,13 @@ export function authorize(requiredPermission: string) {
         res.status(403).json({
           success: false,
           error: error.message,
-          code: error.code
+          code: error.code,
         });
       } else {
         logger.error('Unexpected error in authorize middleware', error as Error, 'RBACMiddleware');
         res.status(500).json({
           success: false,
-          error: 'Internal server error'
+          error: 'Internal server error',
         });
       }
     }
@@ -151,17 +146,17 @@ export function authorizeAny(permissions: string[]) {
       }
 
       // Check if user has any of the required permissions
-      const hasPermission = permissions.some(permission => {
+      const hasPermission = permissions.some((permission) => {
         const allowedRoles = permissionMap[permission];
         return allowedRoles && allowedRoles.includes(req.user!.role_id);
       });
 
       if (!hasPermission) {
-        logger.warn(
-          `Authorize any: insufficient permissions`,
-          'RBACMiddleware',
-          { userId: req.user.id, userRole: req.user.role_id, requiredPermissions: permissions }
-        );
+        logger.warn(`Authorize any: insufficient permissions`, 'RBACMiddleware', {
+          userId: req.user.id,
+          userRole: req.user.role_id,
+          requiredPermissions: permissions,
+        });
         throw new AuthorizationError(`Insufficient permissions`);
       }
 
@@ -171,13 +166,17 @@ export function authorizeAny(permissions: string[]) {
         res.status(403).json({
           success: false,
           error: error.message,
-          code: error.code
+          code: error.code,
         });
       } else {
-        logger.error('Unexpected error in authorizeAny middleware', error as Error, 'RBACMiddleware');
+        logger.error(
+          'Unexpected error in authorizeAny middleware',
+          error as Error,
+          'RBACMiddleware'
+        );
         res.status(500).json({
           success: false,
-          error: 'Internal server error'
+          error: 'Internal server error',
         });
       }
     }
@@ -210,13 +209,17 @@ export function authorizeRole(roleId: RoleId) {
         res.status(403).json({
           success: false,
           error: error.message,
-          code: error.code
+          code: error.code,
         });
       } else {
-        logger.error('Unexpected error in authorizeRole middleware', error as Error, 'RBACMiddleware');
+        logger.error(
+          'Unexpected error in authorizeRole middleware',
+          error as Error,
+          'RBACMiddleware'
+        );
         res.status(500).json({
           success: false,
-          error: 'Internal server error'
+          error: 'Internal server error',
         });
       }
     }
@@ -251,13 +254,17 @@ export function authorizeMinRole(minRoleId: RoleId) {
         res.status(403).json({
           success: false,
           error: error.message,
-          code: error.code
+          code: error.code,
         });
       } else {
-        logger.error('Unexpected error in authorizeMinRole middleware', error as Error, 'RBACMiddleware');
+        logger.error(
+          'Unexpected error in authorizeMinRole middleware',
+          error as Error,
+          'RBACMiddleware'
+        );
         res.status(500).json({
           success: false,
-          error: 'Internal server error'
+          error: 'Internal server error',
         });
       }
     }

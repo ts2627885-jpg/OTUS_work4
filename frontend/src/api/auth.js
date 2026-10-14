@@ -5,14 +5,14 @@ export const authAPI = {
     return client.post('/auth/register', {
       username,
       email,
-      password
+      password,
     })
   },
 
   login(username, password) {
     return client.post('/auth/login', {
       username,
-      password
+      password,
     })
   },
 
@@ -23,5 +23,5 @@ export const authAPI = {
 
   getProfile() {
     return client.get('/auth/profile')
-  }
+  },
 }

@@ -45,14 +45,14 @@ export function createDatabasePool(): Pool {
     keepAlive: true,
     // Удалённая база (Supabase) может долго устанавливать соединение; 2 с было мало
     connectionTimeoutMillis: parseInt(process.env.DB_CONNECT_TIMEOUT || '10000', 10),
-    application_name: 'azs-pult-backend'
+    application_name: 'azs-pult-backend',
   };
 
   logger.info('Initializing database pool', 'Database', {
     host: poolConfig.host,
     port: poolConfig.port,
     database: poolConfig.database,
-    poolSize: poolConfig.max
+    poolSize: poolConfig.max,
   });
 
   const pool = new Pool(poolConfig);
@@ -68,7 +68,7 @@ export function createDatabasePool(): Pool {
       logger.error('Database connection test failed', err, 'Database');
     } else {
       logger.info('Database connection successful', 'Database', {
-        timestamp: result.rows[0].now
+        timestamp: result.rows[0].now,
       });
     }
   });
@@ -118,10 +118,13 @@ export function getPool(): Pool {
       const client = currentClient();
       if (client) {
         // Внутри запроса освобождать соединение нельзя: его вернёт middleware
-        return { query: (...args: any[]) => (client as any).query(...args), release: () => undefined } as any;
+        return {
+          query: (...args: any[]) => (client as any).query(...args),
+          release: () => undefined,
+        } as any;
       }
       return getRawPool().connect();
-    }
+    },
   };
   return scoped as unknown as Pool;
 }

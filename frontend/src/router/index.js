@@ -17,19 +17,19 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: LoginView,
-    meta: { requiresAuth: false }
+    meta: { requiresAuth: false },
   },
   {
     path: '/register',
     name: 'Register',
     component: RegisterView,
-    meta: { requiresAuth: false }
+    meta: { requiresAuth: false },
   },
   {
     path: '/',
     name: 'Dashboard',
     component: DashboardView,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
   {
     path: '/azs',
@@ -37,8 +37,8 @@ const routes = [
     component: AzsListView,
     meta: {
       requiresAuth: true,
-      requiredPermissions: ['azs_view_all', 'azs_view_own']
-    }
+      requiredPermissions: ['azs_view_all', 'azs_view_own'],
+    },
   },
   {
     path: '/azs/:id',
@@ -46,20 +46,20 @@ const routes = [
     component: AzsDetailView,
     meta: {
       requiresAuth: true,
-      requiredPermissions: ['azs_view_all', 'azs_view_own']
-    }
+      requiredPermissions: ['azs_view_all', 'azs_view_own'],
+    },
   },
   {
     path: '/data',
     name: 'Data',
     component: () => import('@/views/DataView.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
   {
     path: '/analytics',
     name: 'Analytics',
     component: () => import('@/views/AnalyticsView.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
   {
     path: '/recommendations',
@@ -67,8 +67,8 @@ const routes = [
     component: RecommendationsView,
     meta: {
       requiresAuth: true,
-      requiredPermissions: ['recommendations_view']
-    }
+      requiredPermissions: ['recommendations_view'],
+    },
   },
   {
     path: '/import',
@@ -76,8 +76,8 @@ const routes = [
     component: DataImportView,
     meta: {
       requiresAuth: true,
-      requiredPermissions: ['data_import']
-    }
+      requiredPermissions: ['data_import'],
+    },
   },
   {
     path: '/admin',
@@ -85,19 +85,19 @@ const routes = [
     component: AdminView,
     meta: {
       requiresAuth: true,
-      requiredPermissions: ['users_manage', 'settings']
-    }
+      requiredPermissions: ['users_manage', 'settings'],
+    },
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    component: NotFoundView
-  }
+    component: NotFoundView,
+  },
 ]
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
 })
 
 // Route guards
@@ -124,9 +124,7 @@ router.beforeEach((to, from, next) => {
   // Check permissions
   const requiredPermissions = to.meta.requiredPermissions
   if (requiredPermissions && requiredPermissions.length > 0) {
-    const hasPermission = requiredPermissions.some(
-      perm => authStore.hasPermission(perm)
-    )
+    const hasPermission = requiredPermissions.some((perm) => authStore.hasPermission(perm))
     if (!hasPermission) {
       next({ name: 'Dashboard' })
       return

@@ -10,22 +10,19 @@ async function updatePasswords() {
     port: parseInt(process.env.DB_PORT || '5432', 10),
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'azs_pult'
+    database: process.env.DB_NAME || 'azs_pult',
   });
 
   try {
     const passwords: { [key: string]: string } = {
-      'admin': 'Admin123456',
-      'manager': 'Manager123456',
-      'analyst': 'Analyst123456'
+      admin: 'Admin123456',
+      manager: 'Manager123456',
+      analyst: 'Analyst123456',
     };
 
     for (const [username, password] of Object.entries(passwords)) {
       const hash = await bcrypt.hash(password, 10);
-      await pool.query(
-        'UPDATE users SET password_hash = $1 WHERE username = $2',
-        [hash, username]
-      );
+      await pool.query('UPDATE users SET password_hash = $1 WHERE username = $2', [hash, username]);
       console.log(`✅ Updated ${username}: ${password}`);
     }
 

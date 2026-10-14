@@ -10,11 +10,14 @@ async function testPassword() {
     port: parseInt(process.env.DB_PORT || '5432', 10),
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'azs_pult'
+    database: process.env.DB_NAME || 'azs_pult',
   });
 
   try {
-    const result = await pool.query('SELECT username, password_hash FROM users WHERE username = $1', ['admin']);
+    const result = await pool.query(
+      'SELECT username, password_hash FROM users WHERE username = $1',
+      ['admin']
+    );
 
     if (result.rows.length === 0) {
       console.log('Admin user not found');

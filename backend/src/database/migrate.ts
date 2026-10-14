@@ -21,7 +21,7 @@ dotenv.config();
 
 const MIGRATIONS_DIR = path.join(__dirname, 'migrations');
 const DB_NAME = process.env.DB_NAME || 'azs_pult';
-const BASELINE_ARG = process.argv.find(a => a.startsWith('--baseline'));
+const BASELINE_ARG = process.argv.find((a) => a.startsWith('--baseline'));
 const BASELINE = BASELINE_ARG !== undefined;
 const BASELINE_UPTO = BASELINE_ARG?.split('=')[1]; // без значения — отмечаются все миграции
 const LOCK_KEY = 'azs_pult_migrations';
@@ -42,10 +42,11 @@ interface Migration {
 }
 
 function loadMigrations(): Migration[] {
-  return fs.readdirSync(MIGRATIONS_DIR)
-    .filter(f => /^\d{3}_.+\.sql$/.test(f))
+  return fs
+    .readdirSync(MIGRATIONS_DIR)
+    .filter((f) => /^\d{3}_.+\.sql$/.test(f))
     .sort()
-    .map(file => {
+    .map((file) => {
       const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf8');
       return {
         version: file.replace(/\.sql$/, ''),
@@ -86,15 +87,19 @@ async function main() {
         applied_at timestamp NOT NULL DEFAULT now()
       )`);
 
-    const { rows: appliedRows } = await client.query('SELECT version, checksum FROM schema_migrations');
-    const applied = new Map(appliedRows.map(r => [r.version as string, r.checksum as string]));
+    const { rows: appliedRows } = await client.query(
+      'SELECT version, checksum FROM schema_migrations'
+    );
+    const applied = new Map(appliedRows.map((r) => [r.version as string, r.checksum as string]));
 
     // База с таблицами, но без журнала миграций: накатывать 001 поверх нельзя
     if (applied.size === 0 && !BASELINE) {
       const { rows } = await client.query(`SELECT to_regclass('public.users') AS t`);
       if (rows[0].t) {
-        throw new Error('База уже содержит таблицы, но не отмечена миграциями. ' +
-          'Запустите "npm run migrate -- --baseline", если схема актуальна.');
+        throw new Error(
+          'База уже содержит таблицы, но не отмечена миграциями. ' +
+            'Запустите "npm run migrate -- --baseline", если схема актуальна.'
+        );
       }
     }
 
@@ -109,7 +114,10 @@ async function main() {
       }
 
       if (BASELINE && (!BASELINE_UPTO || m.version <= BASELINE_UPTO)) {
-        await client.query('INSERT INTO schema_migrations (version, checksum) VALUES ($1, $2)', [m.version, m.checksum]);
+        await client.query('INSERT INTO schema_migrations (version, checksum) VALUES ($1, $2)', [
+          m.version,
+          m.checksum,
+        ]);
         console.log(`отмечено как применённая: ${m.version}`);
         count++;
         continue;
@@ -118,7 +126,10 @@ async function main() {
       await client.query('BEGIN');
       try {
         await client.query(m.sql);
-        await client.query('INSERT INTO schema_migrations (version, checksum) VALUES ($1, $2)', [m.version, m.checksum]);
+        await client.query('INSERT INTO schema_migrations (version, checksum) VALUES ($1, $2)', [
+          m.version,
+          m.checksum,
+        ]);
         await client.query('COMMIT');
         console.log(`применена: ${m.version}`);
         count++;
@@ -130,13 +141,15 @@ async function main() {
 
     console.log(count ? `✅ Готово: обработано миграций — ${count}` : '✅ Новых миграций нет');
   } finally {
-    await client.query('SELECT pg_advisory_unlock(hashtext($1))', [LOCK_KEY]).catch(() => undefined);
+    await client
+      .query('SELECT pg_advisory_unlock(hashtext($1))', [LOCK_KEY])
+      .catch(() => undefined);
     client.release();
     await pool.end();
   }
 }
 
-main().catch(error => {
+main().catch((error) => {
   console.error('❌ Миграция не выполнена:', error.message);
   process.exit(1);
 });

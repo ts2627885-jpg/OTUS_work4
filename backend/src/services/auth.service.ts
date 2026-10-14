@@ -17,13 +17,9 @@ import {
   IRegisterRequest,
   IAuthPayload,
   IUserResponse,
-  UserRole
+  UserRole,
 } from '@models/User';
-import {
-  AuthenticationError,
-  ConflictError,
-  NotFoundError
-} from '@utils/errors';
+import { AuthenticationError, ConflictError, NotFoundError } from '@utils/errors';
 import { logger } from '@utils/logger';
 
 export class AuthService {
@@ -83,9 +79,9 @@ export class AuthService {
       token: {
         access_token: token,
         token_type: 'Bearer',
-        expires_in: this.jwtExpiration
+        expires_in: this.jwtExpiration,
       },
-      user: this.formatUserResponse(user)
+      user: this.formatUserResponse(user),
     };
   }
 
@@ -122,7 +118,7 @@ export class AuthService {
       role: 'viewer',
       is_active: true,
       created_at: new Date(),
-      updated_at: new Date()
+      updated_at: new Date(),
     });
 
     logger.info(`New user registered`, 'AuthService', { userId: newUser.id });
@@ -134,9 +130,9 @@ export class AuthService {
       token: {
         access_token: token,
         token_type: 'Bearer',
-        expires_in: this.jwtExpiration
+        expires_in: this.jwtExpiration,
       },
-      user: this.formatUserResponse(newUser)
+      user: this.formatUserResponse(newUser),
     };
   }
 
@@ -164,7 +160,9 @@ export class AuthService {
    * @returns New JWT token
    * @throws NotFoundError if user doesn't exist
    */
-  async refreshToken(userId: string): Promise<{ access_token: string; token_type: string; expires_in: string }> {
+  async refreshToken(
+    userId: string
+  ): Promise<{ access_token: string; token_type: string; expires_in: string }> {
     const user = await this.userRepository.findById(userId);
 
     if (!user) {
@@ -178,7 +176,7 @@ export class AuthService {
     return {
       access_token: newToken,
       token_type: 'Bearer',
-      expires_in: this.jwtExpiration
+      expires_in: this.jwtExpiration,
     };
   }
 
@@ -210,12 +208,12 @@ export class AuthService {
       id: user.id,
       username: user.username,
       email: user.email,
-      role_id: user.role_id
+      role_id: user.role_id,
     };
 
     return jwt.sign(payload, this.jwtSecret, {
       expiresIn: this.jwtExpiration as jwt.SignOptions['expiresIn'],
-      algorithm: 'HS256'
+      algorithm: 'HS256',
     });
   }
 
@@ -233,7 +231,7 @@ export class AuthService {
       email: user.email,
       role: user.role as UserRole,
       permissions: user.permissions ?? [],
-      azs_access: user.azs_access ?? []
+      azs_access: user.azs_access ?? [],
     };
   }
 }

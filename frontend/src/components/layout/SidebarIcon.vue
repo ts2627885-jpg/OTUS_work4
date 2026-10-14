@@ -1,6 +1,15 @@
 <template>
   <!-- Иконки бокового меню: тонкая линия с лёгкой заливкой акцентов, цвет из currentColor -->
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="s-icon">
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.8"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+    class="s-icon"
+  >
     <!-- Пульт: линия пульса на фоне круга -->
     <template v-if="name === 'pulse'">
       <circle cx="12" cy="12" r="9" fill="currentColor" fill-opacity="0.15" stroke="none" />
@@ -17,14 +26,27 @@
 
     <!-- Рекомендации: лампочка с искрой -->
     <template v-else-if="name === 'bulb'">
-      <path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z" fill="currentColor" fill-opacity="0.15" />
+      <path
+        d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"
+        fill="currentColor"
+        fill-opacity="0.15"
+      />
       <path d="M9.5 19.5h5M10.5 22h3" />
       <path d="M19.5 4.5l.8-1.6M21.5 7h1.7" />
     </template>
 
     <!-- Аналитика: график с трендом -->
     <template v-else-if="name === 'chart'">
-      <rect x="3" y="3" width="18" height="18" rx="3" fill="currentColor" fill-opacity="0.15" stroke="none" />
+      <rect
+        x="3"
+        y="3"
+        width="18"
+        height="18"
+        rx="3"
+        fill="currentColor"
+        fill-opacity="0.15"
+        stroke="none"
+      />
       <path d="M5 17l4.5-5 3.5 3.2L19 8" />
       <path d="M14.5 8H19v4.5" />
     </template>
@@ -33,7 +55,11 @@
     <template v-else-if="name === 'import'">
       <path d="M12 3v11" />
       <path d="M8 10.5l4 4 4-4" />
-      <path d="M4 14v4.5a2.5 2.5 0 0 0 2.5 2.5h11a2.5 2.5 0 0 0 2.5-2.5V14" fill="currentColor" fill-opacity="0.15" />
+      <path
+        d="M4 14v4.5a2.5 2.5 0 0 0 2.5 2.5h11a2.5 2.5 0 0 0 2.5-2.5V14"
+        fill="currentColor"
+        fill-opacity="0.15"
+      />
     </template>
 
     <!-- Данные: база (стек) -->
@@ -54,7 +80,7 @@
 
 <script setup>
 defineProps({
-  name: { type: String, required: true }
+  name: { type: String, required: true },
 })
 </script>
 

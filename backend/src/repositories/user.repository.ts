@@ -97,7 +97,7 @@ export class UserRepository {
       userData.role ?? 'viewer',
       userData.is_active,
       userData.created_at,
-      userData.updated_at
+      userData.updated_at,
     ];
 
     logger.query(query, values);
@@ -152,7 +152,8 @@ export class UserRepository {
 
     values.push(id); // For WHERE clause
 
-    if (fields.length === 1) { // Only updated_at
+    if (fields.length === 1) {
+      // Only updated_at
       return this.findById(id);
     }
 
