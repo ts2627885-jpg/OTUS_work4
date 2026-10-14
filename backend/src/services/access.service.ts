@@ -74,9 +74,13 @@ export async function audit(
   }
 }
 
+/**
+ * Адрес клиента для журналов. req.ip учитывает настройку trust proxy (см. server.ts):
+ * берётся адрес, который добавил доверенный прокси, а не значение из заголовка,
+ * которое мог подменить клиент.
+ */
 export function clientIp(req: Request): string {
-  const fwd = (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim();
-  return fwd || req.socket.remoteAddress || '';
+  return req.ip || req.socket.remoteAddress || '';
 }
 
 /** Фиксирует попытку входа: успех или ошибка, логин, адрес, браузер */
