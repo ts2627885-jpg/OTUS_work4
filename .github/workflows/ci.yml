@@ -7,10 +7,16 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Новый запуск для той же ветки отменяет предыдущий, чтобы не тратить минуты впустую
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   backend:
-    name: Backend — линтинг, типы, тесты, сборка
+    name: Backend — форматирование, линтинг, типы, тесты, сборка
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: backend
@@ -21,7 +27,10 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: backend/package-lock.json
-      - run: npm ci
+      - name: Установка зависимостей
+        run: npm ci
+      - name: Проверка форматирования (Prettier)
+        run: npm run format:check
       - name: Линтинг (ESLint)
         run: npm run lint
       - name: Проверка типов (TypeScript)
@@ -32,8 +41,9 @@ jobs:
         run: npm run build
 
   frontend:
-    name: Frontend — линтинг, тесты, сборка
+    name: Frontend — форматирование, линтинг, тесты, сборка
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: frontend
@@ -46,7 +56,10 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
+      - name: Установка зависимостей
+        run: npm ci
+      - name: Проверка форматирования (Prettier)
+        run: npm run format:check
       - name: Линтинг (ESLint)
         run: npm run lint
       - name: Тесты (Vitest, однократный запуск)
