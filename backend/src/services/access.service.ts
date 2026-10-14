@@ -25,9 +25,17 @@ export async function actorOf(req: Request): Promise<Actor> {
   return { id, role: rows[0]?.role ?? null };
 }
 
-/** null — доступны все станции, иначе список id */
+/** Роли, которым доступны все станции (менеджер — только назначенные, остальные — никакие) */
+const ALL_STATIONS_ROLES = ['admin', 'analyst', 'viewer'];
+
+/**
+ * null — доступны все станции, иначе список id.
+ * Роль null (пользователь деактивирован или токен некорректен) — ничего не доступно:
+ * неизвестная роль не должна получать полный доступ.
+ */
 export async function accessibleStationIds(actor: Actor): Promise<string[] | null> {
-  if (actor.role !== 'manager') return null;
+  if (actor.role && ALL_STATIONS_ROLES.includes(actor.role)) return null;
+  if (actor.role !== 'manager') return [];
   const { rows } = await getPool().query(`SELECT azs_id FROM azs_access WHERE user_id = $1`, [
     actor.id,
   ]);

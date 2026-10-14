@@ -20,6 +20,7 @@ import express, { Express } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
 
 // Import middleware
 import { errorHandler, asyncHandler, notFound } from '@middleware/errorHandler.middleware';
@@ -64,6 +65,10 @@ dotenv.config();
  */
 export function createApp(): Express {
   const app = express();
+
+  // Один прокси перед приложением (Vercel, nginx): реальный адрес клиента — из X-Forwarded-For.
+  // Без этого все клиенты получают адрес прокси и лимит входа срабатывает для всех сразу.
+  app.set('trust proxy', 1);
 
   // ============================================
   // 🔒 Security Middleware
@@ -121,7 +126,23 @@ export function createApp(): Express {
   // ============================================
 
   // --------- Authentication Routes ---------
-  app.post('/api/auth/login', (req, res, next) => {
+  // Защита от перебора паролей: не более 10 неудачных попыток входа с одного адреса за 15 минут.
+  // Успешные входы не считаются. Счётчик хранится в памяти процесса: на serverless-платформе
+  // у каждого экземпляра свой счётчик, поэтому полная защита требует общего хранилища (Redis).
+  const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    skipSuccessfulRequests: true,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: {
+      success: false,
+      error: 'Слишком много неудачных попыток входа. Повторите через 15 минут.',
+      code: 'RATE_LIMITED',
+    },
+  });
+
+  app.post('/api/auth/login', loginLimiter, (req, res, next) => {
     // журнал входов: успех или ошибка (FR-1.2)
     res.on('finish', () => {
       logLogin(req, res.statusCode);
