@@ -21,21 +21,19 @@ export function currentClient(): PoolClient | undefined {
 }
 
 /** Передать роль и id пользователя в контекст текущего запроса */
+// Некорректный id подменяем нулевым UUID: поиск ничего не найдёт, роль станет пустой (отказ по умолчанию)
+const NO_USER_ID = '00000000-0000-0000-0000-000000000000';
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function bindUserContext(userId: string): Promise<void> {
   const client = currentClient();
   if (!client) return;
-  // Некорректный id не даёт роли: политики RLS тогда закроют всё (отказ по умолчанию)
-  const valid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
-  let role = '';
-  if (valid) {
-    // Чтение users разрешено любому контексту (см. 010_rls): нужно для входа и проверки роли
-    const { rows } = await client.query('SELECT role FROM users WHERE id = $1 AND is_active', [
-      userId,
-    ]);
-    role = rows[0]?.role ?? '';
-  }
+  const valid = UUID_RE.test(userId);
+  // Один запрос вместо двух: роль ищем и тут же ставим контекст. Поиск идёт до установки роли,
+  // поэтому выполняется под текущим контекстом (политика users_select разрешает чтение anonymous).
   await client.query(
-    "SELECT set_config('app.role', $1, false), set_config('app.user_id', $2, false)",
-    [role, valid ? userId : '']
+    `SELECT set_config('app.role', COALESCE((SELECT role FROM users WHERE id = $1 AND is_active), ''), false) AS role_set,
+            set_config('app.user_id', $2, false) AS user_set`,
+    [valid ? userId : NO_USER_ID, valid ? userId : '']
   );
 }
