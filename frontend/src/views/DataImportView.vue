@@ -115,6 +115,8 @@
 import SidebarIcon from '@/components/layout/SidebarIcon.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useImport } from '@/composables/useImport'
+import { trackEvent } from '@/analytics'
+import { EVENTS } from '@/analytics/events'
 
 const files = ref([])
 const { history, loadHistory, upload: sendFiles, uploadState } = useImport()
@@ -141,9 +143,11 @@ const onPick = (e) => {
 }
 
 const upload = async () => {
+  const filesCount = files.value.length
   try {
     result.value = await sendFiles(files.value)
     files.value = []
+    trackEvent(EVENTS.DATA_IMPORT_UPLOAD, { files_count: filesCount })
   } catch {
     // текст ошибки уже в error (состояние отправки)
   }

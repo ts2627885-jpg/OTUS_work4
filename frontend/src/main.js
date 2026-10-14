@@ -5,6 +5,10 @@ import router from './router'
 import './styles/tokens.css'
 import './styles/responsive.css'
 import { watchTableLabels } from './utils/tableLabels'
+import { initAnalytics } from './analytics'
+
+// Счётчик до монтирования: первый просмотр страницы уйдёт через роутер
+initAnalytics()
 
 const app = createApp(App)
 

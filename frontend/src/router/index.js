@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { trackPageView } from '@/analytics'
 
 // Components (lazy load)
 const LoginView = () => import('@/views/LoginView.vue')
@@ -133,5 +134,8 @@ router.beforeEach((to, from, next) => {
 
   next()
 })
+
+// Просмотры страниц в SPA: переходы внутри приложения счётчик сам не видит
+router.afterEach((to) => trackPageView(to.fullPath))
 
 export default router

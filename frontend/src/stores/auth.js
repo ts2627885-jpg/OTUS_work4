@@ -2,6 +2,8 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authAPI } from '@/api/auth'
 import { errorMessage } from '@/composables/useRequest'
+import { trackEvent } from '@/analytics'
+import { EVENTS } from '@/analytics/events'
 
 // Ошибки входа и регистрации: неверные данные (401) показываем понятно, остальное — общим способом
 const authErrorMessage = (err, fallback) =>
@@ -46,6 +48,7 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await authAPI.register(username, email, password)
       // Auto-login after registration
       await login(username, password)
+      trackEvent(EVENTS.REGISTER_SUCCESS)
       return response.data
     } catch (err) {
       // backend отвечает { success: false, error: '...' }
@@ -67,10 +70,15 @@ export const useAuthStore = defineStore('auth', () => {
       // Save token to localStorage
       localStorage.setItem('auth_token', token.value)
       localStorage.setItem('user', JSON.stringify(user.value))
+      trackEvent(EVENTS.LOGIN_SUCCESS, { role: user.value.role })
 
       return response.data
     } catch (err) {
       error.value = authErrorMessage(err, 'Не удалось войти.')
+      // Имя пользователя в аналитику не передаём, только причину
+      trackEvent(EVENTS.LOGIN_FAILED, {
+        reason: err.response?.status === 401 ? 'invalid_credentials' : 'error',
+      })
       throw err
     } finally {
       loading.value = false

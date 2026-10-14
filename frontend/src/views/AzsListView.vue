@@ -104,6 +104,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useStations } from '@/composables/useStations'
+import { trackEvent } from '@/analytics'
+import { EVENTS } from '@/analytics/events'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -175,6 +177,7 @@ const create = async () => {
   } catch {
     return // текст ошибки уже в formError
   }
+  trackEvent(EVENTS.STATION_CREATE)
   form.value = {
     name: '',
     region: 'Tver region',

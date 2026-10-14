@@ -201,6 +201,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRecommendations } from '@/composables/useRecommendations'
 import { errorMessage } from '@/composables/useRequest'
 import { useAuthStore } from '@/stores/auth'
+import { trackEvent } from '@/analytics'
+import { EVENTS } from '@/analytics/events'
 
 const authStore = useAuthStore()
 const canWrite = computed(() => ['admin', 'manager'].includes(authStore.user?.role))
@@ -253,6 +255,7 @@ const generate = async () => {
   actionError.value = ''
   try {
     const result = await rec.generate()
+    trackEvent(EVENTS.RECOMMENDATIONS_GENERATE, { saved: result.saved, closed: result.closed })
     actionMessage.value = `Сохранено рекомендаций: ${result.saved}, закрыто автоматически: ${result.closed}`
   } catch (e) {
     actionError.value = errorMessage(e)
@@ -273,6 +276,7 @@ const complete = async (r) => {
   busyId.value = r.id
   try {
     await rec.complete(r.id)
+    trackEvent(EVENTS.RECOMMENDATION_COMPLETE, { priority: r.priority })
   } catch (e) {
     actionError.value = errorMessage(e)
   } finally {

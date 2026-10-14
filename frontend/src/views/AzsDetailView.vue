@@ -189,6 +189,8 @@ import { azsAPI } from '@/api/azs'
 import { analyticsAPI } from '@/api/analytics'
 import { useRequest, useMutation } from '@/composables/useRequest'
 import { useAuthStore } from '@/stores/auth'
+import { trackEvent } from '@/analytics'
+import { EVENTS } from '@/analytics/events'
 import SeriesChart from '@/components/charts/SeriesChart.vue'
 
 const route = useRoute()
@@ -292,6 +294,7 @@ const save = async () => {
       ...draft.value,
       fuelTypes,
     })
+    trackEvent(EVENTS.STATION_UPDATE, { station_id: station.value?.id })
   } catch {
     return
   }

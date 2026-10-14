@@ -136,6 +136,8 @@ import { useRequest } from '@/composables/useRequest'
 import { azsAPI } from '@/api/azs'
 import SeriesChart from '@/components/charts/SeriesChart.vue'
 import StateMessage from '@/components/common/StateMessage.vue'
+import { trackEvent } from '@/analytics'
+import { EVENTS } from '@/analytics/events'
 
 const tabs = [
   { key: 'prices', label: 'Ценовая политика' },
@@ -214,6 +216,7 @@ const load = async () => {
 }
 
 const select = (key) => {
+  trackEvent(EVENTS.ANALYTICS_TAB_SELECT, { tab: key })
   tab.value = key
   load()
 }

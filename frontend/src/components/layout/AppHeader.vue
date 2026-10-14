@@ -22,6 +22,8 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { trackEvent } from '@/analytics'
+import { EVENTS } from '@/analytics/events'
 import LogoMark from '@/components/layout/LogoMark.vue'
 
 const router = useRouter()
@@ -39,6 +41,7 @@ const roleLabel = computed(() => {
 })
 
 const handleLogout = () => {
+  trackEvent(EVENTS.LOGOUT)
   authStore.logout()
   router.push({ name: 'Login' })
 }
