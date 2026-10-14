@@ -137,6 +137,22 @@ export class AuthService {
   }
 
   /**
+   * Токен для входа, подтверждённого внешним провайдером (OAuth2).
+   * Пароль не проверяется: вход разрешён только после проверки провайдера в oauth.service.
+   *
+   * @param userId - ID локального пользователя
+   * @returns JWT токен и срок жизни
+   * @throws AuthenticationError если пользователь не найден или деактивирован
+   */
+  async issueSessionForUser(userId: string): Promise<{ access_token: string; expires_in: string }> {
+    const user = await this.userRepository.findById(userId);
+    if (!user || !user.is_active) {
+      throw new AuthenticationError('Account is disabled');
+    }
+    return { access_token: this.generateToken(user), expires_in: this.jwtExpiration };
+  }
+
+  /**
    * Get user profile by ID
    *
    * @param userId - User ID

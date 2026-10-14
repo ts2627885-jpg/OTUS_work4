@@ -24,4 +24,9 @@ export const authAPI = {
   getProfile() {
     return client.get('/auth/profile')
   },
+
+  // Включённые провайдеры OAuth2 (Google, Яндекс): без учётных данных список пуст
+  getOAuthProviders() {
+    return client.get('/auth/oauth/providers')
+  },
 }

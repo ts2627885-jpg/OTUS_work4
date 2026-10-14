@@ -38,6 +38,7 @@ import { registerRecommendationRoutes } from './routes/recommendations.routes';
 import { registerAdminRoutes } from './routes/admin.routes';
 import { registerAnalyticsRoutes } from './routes/analytics.routes';
 import { registerDashboardRoutes } from './routes/dashboard.routes';
+import { registerOAuthRoutes } from './routes/oauth.routes';
 import {
   actorOf,
   accessibleStationIds,
@@ -153,6 +154,9 @@ export function createApp(): Express {
   app.post('/api/auth/register', (req, res, next) => {
     authController.register(req, res).catch(next);
   });
+
+  // Вход через OAuth2 (Google, Яндекс ID): включается только при заданных CLIENT_ID/SECRET
+  registerOAuthRoutes(app, authService);
 
   app.post('/api/auth/logout', authenticateToken, (req, res, next) => {
     authController.logout(req, res).catch(next);

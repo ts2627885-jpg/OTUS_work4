@@ -39,6 +39,20 @@
         </button>
       </form>
 
+      <div v-if="oauthError" class="error-message oauth-error">❌ {{ oauthError }}</div>
+
+      <div v-if="oauthProviders.length" class="oauth-block">
+        <div class="oauth-divider"><span>или войдите через сервис</span></div>
+        <a
+          v-for="provider in oauthProviders"
+          :key="provider.id"
+          :href="`/api/auth/oauth/${provider.id}/start`"
+          class="oauth-btn"
+        >
+          Войти через {{ provider.name }}
+        </a>
+      </div>
+
       <div class="login-footer">
         <p>
           Нет аккаунта?
@@ -58,9 +72,10 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { authAPI } from '@/api/auth'
 import LogoMark from '@/components/layout/LogoMark.vue'
 
 const router = useRouter()
@@ -72,6 +87,51 @@ const showDemoHint = import.meta.env.VITE_USE_MOCKS === 'true'
 const formData = reactive({
   username: '',
   password: '',
+})
+
+// Вход через провайдеров OAuth2: список приходит с сервера (пусто, если учётные данные не заданы)
+const oauthProviders = ref([])
+const oauthError = ref('')
+
+const OAUTH_ERRORS = {
+  access_denied: 'Вход отменён в сервисе провайдера.',
+  email_taken: 'Почта уже используется учётной записью. Войдите по логину и паролю.',
+  email_not_verified: 'Провайдер не подтвердил почту. Вход через него недоступен.',
+  account_disabled: 'Учётная запись отключена администратором.',
+  state_mismatch: 'Сессия входа устарела. Попробуйте ещё раз.',
+  provider_disabled: 'Этот способ входа сейчас не настроен.',
+  token_exchange_failed: 'Не удалось подтвердить вход у провайдера. Попробуйте ещё раз.',
+  profile_failed: 'Не удалось получить профиль у провайдера.',
+}
+
+onMounted(async () => {
+  // Результат возврата от провайдера приходит во фрагменте адреса (#oauth_token / #oauth_error).
+  // Фрагмент сразу стираем из адресной строки, чтобы токен не остался в истории браузера.
+  const params = new URLSearchParams(window.location.hash.slice(1))
+  if (window.location.hash) history.replaceState(null, '', window.location.pathname)
+
+  const errorCode = params.get('oauth_error')
+  if (errorCode)
+    oauthError.value = OAUTH_ERRORS[errorCode] || 'Внутренняя ошибка при входе через провайдера.'
+
+  const oauthToken = params.get('oauth_token')
+  if (oauthToken) {
+    try {
+      await authStore.loginWithToken(oauthToken)
+      router.push({ name: 'Dashboard' })
+      return
+    } catch {
+      oauthError.value = authStore.error || 'Не удалось войти через провайдера.'
+    }
+  }
+
+  try {
+    const { data } = await authAPI.getOAuthProviders()
+    oauthProviders.value = data?.data?.providers || []
+  } catch {
+    // Сервер без OAuth или mock-режим: кнопок нет, вход по паролю работает как прежде
+    oauthProviders.value = []
+  }
 })
 
 const handleLogin = async () => {
@@ -165,6 +225,49 @@ const handleLogin = async () => {
   border-radius: 6px;
   font-size: 0.9rem;
   border-left: 3px solid #c33;
+}
+
+.oauth-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.oauth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #999;
+  font-size: 0.85rem;
+}
+
+.oauth-divider::before,
+.oauth-divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid #eee;
+}
+
+.oauth-btn {
+  display: block;
+  text-align: center;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  color: #333;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.oauth-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.oauth-error {
+  margin-top: 1rem;
 }
 
 .login-btn {

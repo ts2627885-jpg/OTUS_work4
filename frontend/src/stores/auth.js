@@ -77,6 +77,26 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // Вход через внешнего провайдера: токен уже выдан сервером, нужно получить профиль
+  const loginWithToken = async (accessToken) => {
+    loading.value = true
+    error.value = null
+    token.value = accessToken
+    try {
+      const response = await authAPI.getProfile()
+      user.value = response.data.data
+      localStorage.setItem('auth_token', accessToken)
+      localStorage.setItem('user', JSON.stringify(user.value))
+    } catch (err) {
+      token.value = null
+      user.value = null
+      error.value = authErrorMessage(err, 'Не удалось войти через провайдера.')
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   const logout = () => {
     token.value = null
     user.value = null
@@ -127,6 +147,7 @@ export const useAuthStore = defineStore('auth', () => {
     // Actions
     register,
     login,
+    loginWithToken,
     logout,
     restoreFromStorage,
   }
