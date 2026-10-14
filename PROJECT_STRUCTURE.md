@@ -1,385 +1,230 @@
 # АЗС-Пульт v2.1 - Структура проекта
 
-## 📂 Организация папок и файлов
+Описание репозитория: что где лежит и за что отвечает. Установка и запуск — в [SETUP.md](SETUP.md), обзор — в [README.md](README.md).
+
+## 📂 Дерево репозитория
 
 ```
 azs-pult-fullstack/
-│
-├─ backend/                          # Express.js + TypeScript API
+├─ backend/                         Express + TypeScript API (порт 3001)
 │  ├─ src/
-│  │  ├─ controllers/               # API endpoint handlers
-│  │  │  ├─ authController.ts       # Вход, регистрация
-│  │  │  ├─ azsController.ts        # Управление АЗС
-│  │  │  ├─ pricesController.ts     # Управление ценами
-│  │  │  ├─ recommendationsController.ts
-│  │  │  └─ adminController.ts      # Администрирование
-│  │  │
-│  │  ├─ services/                  # Бизнес-логика
-│  │  │  ├─ authService.ts          # Аутентификация, JWT
-│  │  │  ├─ azsService.ts           # Логика работы с АЗС
-│  │  │  ├─ pricesService.ts        # Логика цен
-│  │  │  └─ recommendationService.ts# AI рекомендации
-│  │  │
-│  │  ├─ repositories/              # Доступ к данным (DAO)
-│  │  │  ├─ userRepository.ts       # Операции с пользователями
-│  │  │  ├─ azsRepository.ts
-│  │  │  ├─ pricesRepository.ts
-│  │  │  └─ recommendationsRepository.ts
-│  │  │
-│  │  ├─ middleware/                # Express middleware
-│  │  │  ├─ authMiddleware.ts       # JWT verification
-│  │  │  ├─ errorHandler.ts         # Error handling
-│  │  │  ├─ validation.ts           # Request validation
-│  │  │  └─ corsMiddleware.ts       # CORS headers
-│  │  │
-│  │  ├─ database/
-│  │  │  ├─ connection.ts           # PostgreSQL connection
-│  │  │  ├─ migrate.ts              # Migration runner
-│  │  │  ├─ init.sql                # Initial schema (legacy)
-│  │  │  ├─ add-column.ts           # Add is_active column
-│  │  │  └─ update-passwords.ts     # Password hashing script
-│  │  │
-│  │  └─ server.ts                  # Main Express app
-│  │
-│  ├─ .env                          # Environment variables
-│  ├─ .env.example                  # Template for .env
-│  ├─ .gitignore
-│  ├─ package.json                  # Dependencies: express, pg, bcryptjs, etc.
-│  ├─ package-lock.json
-│  ├─ tsconfig.json                 # TypeScript config with path aliases
-│  ├─ nodemon.json                  # Dev server config
-│  ├─ import_data.py                # CSV data import script
-│  └─ README.md
+│  │  ├─ index.ts                   точка входа (экспорт createApp)
+│  │  ├─ server.ts                  сборка Express-приложения, подключение маршрутов
+│  │  ├─ config/
+│  │  │  ├─ database.ts             пул PostgreSQL, переменные DB_*
+│  │  │  └─ request-context.ts      контекст запроса (пользователь, БД)
+│  │  ├─ controllers/
+│  │  │  └─ auth.controller.ts      вход, регистрация, выход, обновление токена
+│  │  ├─ routes/                    маршруты по разделам
+│  │  │  ├─ stations.routes.ts      станции, данные станции, проверка станций
+│  │  │  ├─ dashboard.routes.ts     /api/dashboard
+│  │  │  ├─ analytics.routes.ts     /api/analytics/:tab
+│  │  │  ├─ recommendations.routes.ts
+│  │  │  ├─ import.routes.ts        загрузка CSV, история импорта, резервные копии
+│  │  │  └─ admin.routes.ts         пользователи, настройки, логи, пробный план цен
+│  │  ├─ services/                  бизнес-логика
+│  │  │  ├─ auth.service.ts         JWT, bcryptjs
+│  │  │  ├─ access.service.ts       доступ пользователей к станциям
+│  │  │  ├─ rules.service.ts        правила рекомендаций
+│  │  │  ├─ rules-extra.service.ts  дополнительные правила
+│  │  │  ├─ elasticity.service.ts   эластичность спроса
+│  │  │  ├─ recommendations.service.ts
+│  │  │  ├─ analytics.service.ts
+│  │  │  ├─ import.service.ts       разбор и загрузка CSV
+│  │  │  ├─ public-sync.service.ts  синхронизация таблиц приложения (public)
+│  │  │  ├─ price-test.service.ts   пробный план цен
+│  │  │  ├─ settings.service.ts     настройки приложения
+│  │  │  └─ backup.service.ts       резервные копии БД
+│  │  ├─ repositories/
+│  │  │  └─ user.repository.ts      доступ к таблице users
+│  │  ├─ middleware/
+│  │  │  ├─ auth.middleware.ts      проверка JWT
+│  │  │  ├─ rbac.middleware.ts      проверка прав
+│  │  │  ├─ roles.middleware.ts     проверка ролей
+│  │  │  ├─ db-context.middleware.ts
+│  │  │  ├─ requestLogger.middleware.ts   журнал запросов, healthCheck
+│  │  │  └─ errorHandler.middleware.ts
+│  │  ├─ models/                    типы: Azs, Price, Recommendation, User
+│  │  ├─ mocks/                     заглушки auth и данных
+│  │  ├─ utils/                     logger, errors, uuid, validators, db-log-sink
+│  │  ├─ scripts/
+│  │  │  └─ generate-recommendations.ts   npm run recommendations:generate
+│  │  ├─ tests/api-test.ts          ручная проверка API
+│  │  └─ database/
+│  │     ├─ migrate.ts              применение миграций (npm run migrate)
+│  │     ├─ migrations/             SQL-миграции 001–017 (по порядку имён)
+│  │     ├─ init.sql, add-is-active.sql, add-column.ts   старые скрипты (legacy)
+│  │     ├─ legacy/, pending/       архив и незавершённые изменения
+│  │     ├─ import-data-content.ts, check-users.ts, update-passwords.ts, test-password.ts
+│  │     └─ …
+│  ├─ tests/
+│  │  ├─ unit/                      Jest unit-тесты (npm run test:unit)
+│  │  └─ integration/               тесты с реальной БД (npm run test:integration)
+│  ├─ seed_users.py                 создание тестовых пользователей (читает DB_PASSWORD)
+│  ├─ import_data.py                импорт CSV (старый скрипт)
+│  ├─ load_*.py, import_*.py        отдельные скрипты загрузки (часть дублирует друг друга)
+│  ├─ .env.example                  шаблон переменных окружения
+│  ├─ package.json, tsconfig.json, jest.config.js
+│  ├─ Dockerfile
+│  └─ README.md, DEVELOPER_GUIDE.md, IMPLEMENTATION_STATUS.md, SESSION_SUMMARY.md
 │
-├─ frontend/                         # Vue 3 + Vite + TypeScript
+├─ frontend/                        Vue 3 + Vite (порт 3000)
 │  ├─ src/
-│  │  ├─ components/                # Vue components
-│  │  │  ├─ LoginForm.vue           # Login page
-│  │  │  ├─ Navbar.vue              # Navigation bar
-│  │  │  ├─ Sidebar.vue             # Side navigation
-│  │  │  ├─ AzsCard.vue             # Station card
-│  │  │  ├─ PriceEditor.vue         # Price management
-│  │  │  ├─ RecommendationCard.vue  # Recommendation display
-│  │  │  └─ ChartComponent.vue      # Analytics charts
-│  │  │
-│  │  ├─ stores/                    # Pinia state management
-│  │  │  ├─ auth.js                 # Authentication store
-│  │  │  ├─ azs.js                  # AZS store
-│  │  │  ├─ prices.js               # Prices store
-│  │  │  └─ analytics.js            # Analytics data store
-│  │  │
-│  │  ├─ api/                       # Axios API clients
-│  │  │  ├─ client.js               # Base axios instance
-│  │  │  ├─ auth.js                 # Auth API
-│  │  │  ├─ azs.js                  # AZS API
-│  │  │  ├─ prices.js               # Prices API
-│  │  │  ├─ recommendations.js      # Recommendations API
-│  │  │  ├─ admin.js                # Admin API
-│  │  │  └─ analytics.js            # Analytics API
-│  │  │
-│  │  ├─ views/                     # Page components
-│  │  │  ├─ LoginView.vue           # /login
-│  │  │  ├─ DashboardView.vue       # /dashboard
-│  │  │  ├─ AzsListView.vue         # /azs
-│  │  │  ├─ AzsDetailView.vue       # /azs/:id
-│  │  │  ├─ PricesView.vue          # /prices
-│  │  │  ├─ RecommendationsView.vue # /recommendations
-│  │  │  ├─ AnalyticsView.vue       # /analytics
-│  │  │  ├─ DataImportView.vue      # /import
-│  │  │  └─ AdminView.vue           # /admin
-│  │  │
-│  │  ├─ router/                    # Vue Router
-│  │  │  └─ index.js                # Routes configuration
-│  │  │
-│  │  ├─ App.vue                    # Root component
-│  │  ├─ main.js                    # Entry point
-│  │  └─ style.css                  # Global styles
-│  │
-│  ├─ public/                       # Static assets
-│  │  └─ favicon.ico
-│  │
-│  ├─ .env.local                    # Environment variables
-│  ├─ .env.example
-│  ├─ .gitignore
-│  ├─ vite.config.js                # Vite build config
-│  ├─ package.json                  # Dependencies: vue, pinia, axios, etc.
-│  ├─ package-lock.json
-│  ├─ index.html                    # HTML entry point
-│  └─ README.md
+│  │  ├─ main.js                    точка входа
+│  │  ├─ App.vue                    корневой компонент
+│  │  ├─ router/index.js            маршруты и защита по ролям
+│  │  ├─ stores/auth.js             Pinia: вход, роль, токен
+│  │  ├─ api/                       axios-клиенты
+│  │  │  ├─ client.js               базовый экземпляр axios, заголовок Authorization, mock-режим
+│  │  │  ├─ auth.js, azs.js, dashboard.js, analytics.js
+│  │  │  ├─ recommendations.js, import.js, admin.js
+│  │  ├─ composables/               useStations, useRecommendations, useImport, useRequest
+│  │  ├─ views/                     экраны
+│  │  │  ├─ LoginView.vue           /login
+│  │  │  ├─ RegisterView.vue        /register
+│  │  │  ├─ DashboardView.vue       /
+│  │  │  ├─ AzsListView.vue         /azs
+│  │  │  ├─ AzsDetailView.vue       /azs/:id
+│  │  │  ├─ DataView.vue            /data
+│  │  │  ├─ AnalyticsView.vue       /analytics
+│  │  │  ├─ RecommendationsView.vue /recommendations
+│  │  │  ├─ DataImportView.vue      /import
+│  │  │  ├─ AdminView.vue           /admin
+│  │  │  └─ NotFoundView.vue        любой другой путь
+│  │  ├─ components/
+│  │  │  ├─ layout/                 AppHeader, AppSidebar, LogoMark, SidebarIcon
+│  │  │  ├─ charts/SeriesChart.vue  графики
+│  │  │  └─ common/                 StateMessage, HintIcon
+│  │  ├─ mocks/                     мок-адаптер и fixtures/responses.json (режим dev:mock)
+│  │  ├─ utils/tableLabels.js       подписи таблиц для карточек на телефоне
+│  │  ├─ styles/                    tokens.css, responsive.css
+│  │  └─ __tests__/                 Vitest-тесты (экраны, store, мок-адаптер)
+│  ├─ scripts/refresh-mock-fixtures.mjs   обновление фикстур по работающему backend
+│  ├─ public/
+│  ├─ .env.example, .env.local, .env.mock
+│  ├─ vite.config.js, vitest.config.js, package.json
+│  └─ Dockerfile
 │
-├─ _data/                           # Database and data files
-│  ├─ schema.sql                    # 🔑 Complete PostgreSQL schema
-│  │                                # ├─ 10 tables with proper constraints
-│  │                                # ├─ Indexes for performance
-│  │                                # ├─ Audit functions and triggers
-│  │                                # └─ Analytics views
-│  │
-│  ├─ README.md                     # 📖 Data documentation
-│  │                                # ├─ Quick start guide
-│  │                                # ├─ File descriptions
-│  │                                # ├─ SQL queries for analytics
-│  │                                # └─ Database connection info
-│  │
-│  ├─ CSV Data Files (Real Dataset - 13 months)
-│  │  ├─ stations.csv               # 5 АЗС stations with infrastructure
-│  │  ├─ prices.csv                 # 5000+ daily fuel prices & sales (semicolon-delimited)
-│  │  ├─ weather_data.csv           # 1800+ weather records
-│  │  ├─ traffic_data.csv           # Traffic flow data
-│  │  ├─ competitor_prices.csv      # 50000+ competitor price monitoring
-│  │  ├─ promotions.csv             # 100+ promotion records
-│  │  └─ shop_sales.csv             # Store and shop sales data
-│  │
-│  └─ DATA_DESCRIPTION.md           # Detailed data structure docs
+├─ tests/load/                      нагрузочные сценарии
+├─ api/index.js                     serverless-обёртка Express для Vercel (/api/* → backend/dist)
+├─ vercel.json                      сборка и маршрутизация Vercel
 │
-├─ SETUP.md                         # 🚀 Complete setup and run guide
-├─ PROJECT_STRUCTURE.md             # This file
-├─ README.md                        # Project overview
-└─ .gitignore
+├─ _data/                           схема БД и исходные данные
+│  ├─ schema.sql                    полная схема public (эквивалент миграции 001)
+│  ├─ README.md                     описание данных и аналитические запросы
+│  ├─ DATA_DESCRIPTION.md
+│  ├─ backup_20261008_232028/       пример папки с 7 CSV (01.06.2025 – 21.09.2026)
+│  └─ _BD/pipeline/                 пайплайн пересборки схемы azs из CSV
+│     ├─ run_pipeline.sh            точка входа (очистка, схема, загрузка, правила, контроль)
+│     ├─ schema.sql                 DDL схемы azs (12 таблиц)
+│     ├─ transform.sql, post.sql, sync_public.sql
+│     ├─ load_all.py, load_competitor_prices.py, clean_promotions.py, gen_load.py
+│     ├─ azs_README.md              описание пайплайна
+│     ├─ data/                      исходные CSV
+│     ├─ backups/, logs/, out/      резервные копии, журналы, результаты
+│
+├─ db/                              локальная БД в Docker
+│  ├─ docker-compose.yml, Dockerfile
+│  └─ initdb/01-app-role.sh         создание роли приложения без BYPASSRLS
+│
+├─ .github/workflows/
+│  ├─ ci.yml                        lint, типы, тесты, сборка (backend и frontend)
+│  └─ deploy.yml                    деплой на Vercel после успешного CI
+│
+├─ scripts/                         PowerShell и Node-утилиты
+│  ├─ schedule-recommendations.ps1  расписание пересчёта рекомендаций (Windows)
+│  ├─ db-health-check.ps1, register-health-check.ps1
+│  ├─ api-test.mjs, api-crud-check.mjs, api-write-test.mjs, analyze-logs.mjs
+│  └─ QUICKSTART.ps1, SETUP_COMPLETE.ps1, LOAD_ALL_DATA.ps1 и др. (старые сценарии)
+│
+├─ docs/                            журнал работы, формулы правил, матрица ошибок, промпты
+├─ nginx/, nginx.conf               конфигурация reverse proxy (Docker)
+├─ grafana/, prometheus.yml         мониторинг (Docker)
+├─ docker-compose.yml               стек: postgres, redis, backend, frontend, nginx, pgadmin, мониторинг
+├─ SETUP.md, PROJECT_STRUCTURE.md, README.md
+├─ development_report.md, FINAL_STATUS.md, PROJECT_SUMMARY.md, DEPLOYMENT.md, INSTALL.md, ARCHITECTURE.md
+└─ .agents/, .claude/, skills-lock.json   служебные файлы ассистента (не в git)
 ```
 
-## 📋 Файлы и их назначение
+> Папка `_data/backup_20261008_232028/` и файлы в корне с отчётами (`FINAL_STATUS.md`, `SESSION_SUMMARY.md` и др.) — исторические. Актуальные сведения — в README и SETUP.
 
-### Backend (_src_ папка)
-
-| Файл | Назначение |
-|------|-----------|
-| **authController.ts** | POST /auth/login, /auth/register - вход и регистрация |
-| **authService.ts** | Логика JWT токенов, bcryptjs хеширование паролей |
-| **userRepository.ts** | SELECT/INSERT/UPDATE/DELETE пользователей из БД |
-| **authMiddleware.ts** | Проверка JWT токена в каждом запросе |
-| **azsController.ts** | GET/POST/PUT/DELETE АЗС |
-| **azsService.ts** | Бизнес-логика работы со станциями |
-| **azsRepository.ts** | CRUD операции с таблицей azs |
-| **pricesController.ts** | Endpoints для управления ценами |
-| **pricesService.ts** | Логика обновления цен, история |
-| **pricesRepository.ts** | Работа с таблицами prices, price_history |
-| **recommendationService.ts** | Генерация AI рекомендаций |
-| **recommendationsRepository.ts** | CRUD recommendations |
-| **adminController.ts** | Endpoints для администрирования |
-| **errorHandler.ts** | Обработка ошибок в едином формате |
-| **validation.ts** | Валидация входных данных (schema validation) |
-| **connection.ts** | Пул соединений PostgreSQL |
-| **migrate.ts** | Инициализация схемы БД |
-| **server.ts** | Express app, маршруты, middleware |
-
-### Frontend (_src_ папка)
-
-| Файл | Назначение |
-|------|-----------|
-| **auth.js** | Pinia store для authentication |
-| **azs.js** | Pinia store для списка АЗС |
-| **prices.js** | Pinia store для цен |
-| **analytics.js** | Pinia store для аналитики |
-| **api/client.js** | Базовая конфигурация axios (baseURL, auth header) |
-| **api/auth.js** | API вызовы auth endpoints |
-| **api/azs.js** | API вызовы для АЗС |
-| **api/prices.js** | API вызовы для цен |
-| **api/admin.js** | API вызовы для администрирования |
-| **LoginForm.vue** | Форма входа с username/password |
-| **Navbar.vue** | Верхняя навигация с профилем |
-| **DashboardView.vue** | Главная панель с KPI |
-| **AzsListView.vue** | Таблица со списком станций |
-| **PricesView.vue** | Управление ценами в таблице |
-| **RecommendationsView.vue** | Список рекомендаций по ценам |
-| **AnalyticsView.vue** | Графики и аналитика |
-| **router/index.js** | Vue Router с защитой от неавторизированных |
-
-### База данных (_data папка)
-
-| Файл | Размер | Описание |
-|------|--------|---------|
-| **schema.sql** | 9.2 КБ | Полная схема 10 таблиц + индексы + представления |
-| **README.md** | - | Документация по данным и запросы |
-| **stations.csv** | 1.9 КБ | 5 АЗС с инфраструктурой |
-| **prices.csv** | 680 КБ | 5000+ записей (цены, объемы, даты) |
-| **weather_data.csv** | 89 КБ | Погода за 13 месяцев |
-| **competitor_prices.csv** | 12.3 МБ | Мониторинг конкурентов |
-| **promotions.csv** | 19 КБ | Акции и спецпредложения |
-
-## 🔑 Ключевые технологии
+## 📋 Ключевые файлы
 
 ### Backend
-- **Framework**: Express.js (Node.js)
-- **Language**: TypeScript
-- **Database**: PostgreSQL 15
-- **Auth**: JWT (jsonwebtoken)
-- **Passwords**: bcryptjs
-- **ORM**: Custom repositories (no Sequelize/TypeORM for simplicity)
-- **Validation**: Custom validators
-- **Environment**: Nodemon + ts-node
+
+| Файл | Назначение |
+|---|---|
+| `src/server.ts` | Express-приложение: helmet, CORS, JSON, журнал запросов, маршруты |
+| `src/routes/*.ts` | Регистрация маршрутов с `authenticateToken` |
+| `src/services/rules.service.ts` | Правила ценообразования и кэш результатов |
+| `src/services/import.service.ts` | Разбор CSV и загрузка в `azs`/`public` |
+| `src/services/public-sync.service.ts` | Синхронизация таблиц приложения из схемы `azs` |
+| `src/database/migrate.ts` | Применение миграций, журнал `schema_migrations` с контрольной суммой |
+| `src/middleware/auth.middleware.ts` | Проверка JWT на каждом запросе |
+| `src/middleware/rbac.middleware.ts` | Проверка прав по роли (роль читается из БД) |
 
 ### Frontend
-- **Framework**: Vue 3 (Composition API)
-- **Build**: Vite
-- **State Management**: Pinia
-- **HTTP Client**: Axios
-- **Routing**: Vue Router
-- **UI Components**: Element Plus
-- **Styling**: Tailwind CSS (optional)
 
-### Database
-- **RDBMS**: PostgreSQL 15
-- **Tables**: 10 (users, azs, prices, price_history, recommendations, sales_data, weather_data, competitor_prices, audit_logs, import_history)
-- **Views**: 3 analytical views
-- **Triggers**: auto-update updated_at timestamps
-- **Indexes**: 20+ for performance
+| Файл | Назначение |
+|---|---|
+| `src/router/index.js` | Маршруты и защита по авторизации и ролям |
+| `src/stores/auth.js` | Pinia-хранилище входа и роли |
+| `src/api/client.js` | axios: базовый адрес, токен, переключение mock-режима |
+| `src/mocks/mockAdapter.js` | Подмена API в режиме `dev:mock` |
+| `src/views/*.vue` | Экраны приложения |
 
-## 🔐 Данные потока
+### База данных
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    User (Browser)                           │
-└──────────────────────────┬──────────────────────────────────┘
-                           │
-                    HTTP/HTTPS (Port 3000)
-                           │
-        ┌──────────────────▼──────────────────┐
-        │   Frontend (Vue 3 + Vite)          │
-        │  - Components (UI)                 │
-        │  - Pinia stores (State)            │
-        │  - Axios client (HTTP)             │
-        └──────────────────┬──────────────────┘
-                           │
-                    REST API (Port 3001)
-                           │
-        ┌──────────────────▼──────────────────┐
-        │   Backend (Express + TypeScript)   │
-        │  - Controllers (Routes)            │
-        │  - Services (Logic)                │
-        │  - Repositories (Data Access)      │
-        │  - Middleware (Auth, Validation)   │
-        └──────────────────┬──────────────────┘
-                           │
-                    TCP (Port 5432)
-                           │
-        ┌──────────────────▼──────────────────┐
-        │   PostgreSQL 15                    │
-        │  - Users table                     │
-        │  - AZS table                       │
-        │  - Prices table                    │
-        │  - Recommendations table           │
-        │  - Analytics views                 │
-        │  - Audit logs                      │
-        └────────────────────────────────────┘
-```
+**Таблицы `public`** (создаются миграциями 001–017):
+`users`, `azs`, `azs_access`, `prices`, `price_history`, `price_test_plan`, `sales_data`, `shop_sales`, `traffic_data`, `weather_data`, `competitor_prices`, `promotions`, `recommendations`, `import_history`, `audit_logs`, `login_logs`, `app_logs`, `app_settings`.
 
-## 🔄 Аутентификация Flow
+**Представления**: `user_names`, `v_azs_revenue_summary`, `v_price_trends`, `v_recommendations_stats`.
+
+Служебная таблица `schema_migrations` ведёт `npm run migrate`.
+
+**Схема `azs`** (аналитика, пересоздаётся пайплайном): `station`, `fuel_type`, `calendar`, `competitor`, `competitor_price`, `fuel_daily`, `shop_product`, `shop_sales_daily`, `station_daily`, `traffic_daily`, `weather_daily`, `promotion`.
+
+## 🔑 Технологии
+
+### Backend
+- Express.js + TypeScript, пакет `pg` (без ORM, собственные репозитории)
+- JWT (`jsonwebtoken`), bcryptjs, Joi, Helmet, CORS, Multer
+- Jest, ESLint, ts-node/nodemon для разработки
+
+### Frontend
+- Vue 3 (Composition API), Vite, Vue Router, Pinia, Axios
+- Element Plus, Chart.js (`vue-chartjs`)
+- Vitest, Vue Test Utils, jsdom
+
+### База данных
+- PostgreSQL (локально или хостинг; Docker-образ — 15), миграции в `backend/src/database/migrations/`
+- Роль приложения без суперпользователя и без `BYPASSRLS`, политики RLS на таблицах
+
+## 🔐 Поток аутентификации
 
 ```
-1. User заходит на http://localhost:3000
-2. Frontend показывает LoginForm.vue
-3. User вводит username + password
-4. Frontend отправляет POST /auth/login
-5. Backend authController проверяет username в БД
-6. Backend authService сравнивает пароль с bcrypt hash
-7. Backend генерирует JWT токен
-8. Frontend сохраняет токен в localStorage
-9. Frontend отправляет токен в Authorization header
-10. authMiddleware проверяет token на каждый запрос
-11. User видит Dashboard с данными
+1. Пользователь открывает http://localhost:3000 → LoginView.vue
+2. Frontend отправляет POST /api/auth/login (username, password)
+3. Backend проверяет пароль через bcryptjs и выдаёт JWT
+4. Frontend сохраняет токен и передаёт его в заголовке Authorization
+5. auth.middleware проверяет токен на каждом запросе
+6. rbac/roles проверяют роль пользователя по таблице users
+7. Пользователь видит данные своего уровня доступа
 ```
 
-## 📊 Аналитика и представления
+## 🚀 Запуск
 
-### Встроенные SQL представления (Views)
-
-```sql
-v_azs_revenue_summary    -- Выручка по станциям
-v_price_trends           -- Изменения цен
-v_recommendations_stats  -- Статистика рекомендаций
-```
-
-Используются в:
-- Analytics API endpoints
-- AnalyticsView компоненте
-- Dashboard KPI
-
-## 🚀 Развертывание
-
-### Development
 ```bash
-# Terminal 1
-cd backend && npm run dev
+# Разработка
+cd backend && npm run dev     # http://localhost:3001
+cd frontend && npm run dev    # http://localhost:3000
 
-# Terminal 2
-cd frontend && npm run dev
+# Сборка
+cd backend && npm run build && npm start
+cd frontend && npm run build && npm run preview
 ```
-
-### Production
-```bash
-# Backend
-cd backend
-npm run build
-npm start
-
-# Frontend
-cd frontend
-npm run build
-npm run preview
-```
-
-## 📈 Производительность
-
-### Оптимизации
-
-1. **Индексы в БД**
-   - По azs_id (все таблицы с данными)
-   - По датам (временные ряды)
-   - По типам топлива (поиск)
-   - По статусам (фильтры)
-
-2. **Кэширование** (будущее)
-   - Redis для цен
-   - HTTP cache headers
-
-3. **Пагинация**
-   - GET /api/azs?limit=50&offset=0
-   - GET /api/prices?page=1&size=100
-
-4. **Батчинг**
-   - Множественные обновления цен за раз
-   - Импорт CSV в одной транзакции
-
-## 🔍 Отладка и логирование
-
-### Backend логи
-- Console.log в src/server.ts
-- Database query logs (можно включить в PostgreSQL)
-- Error stack traces в errorHandler.ts
-
-### Frontend логи
-- Browser Console (F12)
-- Network tab для API запросов
-- Pinia DevTools (vue-devtools)
-
-### Database логи
-```bash
-psql -h localhost -U postgres -d azs_pult
-\x on  -- expanded display
-SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 10;
-```
-
-## 📚 Дальнейшие улучшения
-
-### Short-term
-- [ ] WebSocket для real-time цен
-- [ ] Email уведомления
-- [ ] CSV export функции
-- [ ] Advanced filtering & search
-
-### Medium-term
-- [ ] Redis кэширование
-- [ ] Message queue (Bull/RabbitMQ)
-- [ ] Elasticsearch для поиска
-- [ ] Multi-language поддержка
-
-### Long-term
-- [ ] Microservices архитектура
-- [ ] ML рекомендации
-- [ ] Mobile приложение
-- [ ] Интеграция с ERP системами
 
 ---
 
-**Версия**: 2.1.0  
-**Последнее обновление**: 08.10.2026
+**Версия**: 2.1.0
+**Последнее обновление**: 14.10.2026
