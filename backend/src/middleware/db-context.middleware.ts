@@ -12,8 +12,23 @@ import { getRawPool } from '@config/database';
 import { requestScope } from '@config/request-context';
 import { logger } from '@utils/logger';
 
+// Маршруты, которые не обращаются к базе: соединение для них не берём (экономим два запроса к БД)
+const NO_DB_ROUTES = [
+  /^\/api\/health$/,
+  /^\/api\/auth\/oauth\/providers$/,
+  /^\/api\/auth\/oauth\/[^/]+\/start$/,
+];
+
+export function needsDbContext(path: string): boolean {
+  return !NO_DB_ROUTES.some((re) => re.test(path));
+}
+
 export function dbContextMiddleware(): RequestHandler {
-  return (_req: Request, res: Response, next: NextFunction): void => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!needsDbContext((req.originalUrl || '').split('?')[0])) {
+      next();
+      return;
+    }
     getRawPool()
       .connect()
       .then(async (client: PoolClient) => {
