@@ -67,6 +67,28 @@ jobs:
       - name: Сборка
         run: npm run build
 
+  security:
+    name: Безопасность — зависимости и статический анализ
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      # Продакшен-зависимости не должны содержать уязвимостей высокого уровня и выше.
+      # Dev-инструменты проверяются отдельно (см. docs/SECURITY_AUDIT.md).
+      - name: Аудит зависимостей backend (продакшен)
+        working-directory: backend
+        run: npm ci && npm audit --omit=dev --audit-level=high
+      - name: Аудит зависимостей frontend (продакшен)
+        working-directory: frontend
+        run: npm ci && npm audit --omit=dev --audit-level=high
+      - name: Статический анализ (Semgrep, правила OWASP Top 10)
+        run: |
+          pip install semgrep==1.180.0
+          semgrep scan --config p/owasp-top-ten --config p/nodejs --config p/javascript --config p/typescript --metrics=off --error --severity ERROR backend/src frontend/src
+
   docker:
     name: Docker — сборка образа бэкенда
     runs-on: ubuntu-latest

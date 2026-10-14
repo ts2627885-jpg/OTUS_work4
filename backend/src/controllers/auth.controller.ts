@@ -42,7 +42,8 @@ export class AuthController {
   async register(req: Request, res: Response): Promise<void> {
     const validated = await validate<IRegisterRequest>(req.body, authValidators.register);
 
-    logger.auth('Registration attempt', { username: validated.username, email: validated.email });
+    // Почту в журналы не пишем: только логин (персональные данные)
+    logger.auth('Registration attempt', { username: validated.username });
 
     const result = await this.authService.register(validated);
 

@@ -28,7 +28,7 @@ async function updatePasswords() {
           `Не задан пароль для ${username} (переменная ${username.toUpperCase()}_PASSWORD, не короче 8 символов)`
         );
       }
-      const hash = await bcrypt.hash(password, 10);
+      const hash = await bcrypt.hash(password, 12);
       await pool.query('UPDATE users SET password_hash = $1 WHERE username = $2', [hash, username]);
       console.log(`✅ Updated ${username}`);
     }

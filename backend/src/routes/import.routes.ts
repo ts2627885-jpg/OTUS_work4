@@ -17,12 +17,14 @@ export function registerImportRoutes(
   authenticateToken: Handler,
   asyncHandler: (fn: (req: Request, res: Response) => Promise<unknown>) => Handler
 ) {
+  // Лимиты защищают память сервера: файлы целиком читаются в память.
+  // Самый большой реальный файл (competitor_prices.csv) — около 12 МБ.
   const upload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 100 * 1024 * 1024 },
+    limits: { fileSize: 25 * 1024 * 1024, files: 10 },
   });
 
-  /** Загрузка одного или нескольких CSV (поле file, до 20 файлов). Файлы идут по очереди, ошибка одного не останавливает остальные */
+  /** Загрузка одного или нескольких CSV (поле file, до 10 файлов по 25 МБ). Файлы идут по очереди, ошибка одного не останавливает остальные */
   app.post(
     '/api/import/csv',
     authenticateToken,

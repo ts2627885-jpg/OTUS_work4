@@ -31,7 +31,7 @@
           <label>Логин<input v-model="form.username" required minlength="3" /></label>
           <label>Почта<input v-model="form.email" type="email" required /></label>
           <label
-            >Пароль<input v-model="form.password" type="password" required minlength="6"
+            >Пароль<input v-model="form.password" type="password" required minlength="8"
           /></label>
           <label
             >Роль

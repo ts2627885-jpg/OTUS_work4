@@ -38,9 +38,9 @@
             id="password"
             v-model="formData.password"
             type="password"
-            placeholder="Минимум 6 символов"
+            placeholder="Минимум 8 символов: заглавные и строчные буквы, цифра, спецсимвол (@$!%*?&)"
             required
-            minlength="6"
+            minlength="8"
             :disabled="authStore.loading"
           />
         </div>

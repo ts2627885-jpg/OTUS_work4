@@ -66,8 +66,18 @@ export function registerAdminRoutes(
       }
       if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
         return res.status(400).json({ success: false, error: 'Укажите корректную почту' });
-      if (!password || String(password).length < 6)
-        return res.status(400).json({ success: false, error: 'Пароль: не менее 6 символов' });
+      // Та же политика, что при регистрации (authValidators.register)
+      if (
+        !password ||
+        String(password).length < 8 ||
+        String(password).length > 128 ||
+        !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/.test(String(password))
+      )
+        return res.status(400).json({
+          success: false,
+          error:
+            'Пароль: от 8 до 128 символов, заглавные и строчные буквы, цифра и спецсимвол (@$!%*?&)',
+        });
       const r = ROLES.includes(role) ? role : 'viewer';
       const exists = await pool().query(`SELECT 1 FROM users WHERE username = $1 OR email = $2`, [
         username,
@@ -77,7 +87,7 @@ export function registerAdminRoutes(
         return res
           .status(409)
           .json({ success: false, error: 'Пользователь с таким логином или почтой уже есть' });
-      const hash = await bcrypt.hash(String(password), 10);
+      const hash = await bcrypt.hash(String(password), 12);
       const { rows } = await pool().query(
         `INSERT INTO users (username, email, password_hash, role, permissions, is_active)
        VALUES ($1, $2, $3, $4, '{}', true)
