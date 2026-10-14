@@ -38,6 +38,7 @@ import { registerRecommendationRoutes } from './routes/recommendations.routes';
 import { registerAdminRoutes } from './routes/admin.routes';
 import { registerAnalyticsRoutes } from './routes/analytics.routes';
 import { registerDashboardRoutes } from './routes/dashboard.routes';
+import { checkDatabase } from './services/health.service';
 import { registerOAuthRoutes } from './routes/oauth.routes';
 import {
   actorOf,
@@ -98,6 +99,20 @@ export function createApp(): Express {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ limit: '10mb', extended: true }));
   app.use(requestLogger);
+
+  // Готовность для мониторинга: до middleware БД, чтобы ответ 503 формировал сам endpoint
+  // (а не падал с 500 при недоступной базе). Не требует токена и не выводит детали ошибок.
+  app.get('/api/health/ready', async (_req, res) => {
+    const database = await checkDatabase(getPool());
+    const ok = database.status === 'ok';
+    res.setHeader('Cache-Control', 'no-store');
+    res.status(ok ? 200 : 503).json({
+      status: ok ? 'ok' : 'unavailable',
+      timestamp: new Date().toISOString(),
+      checks: { database },
+    });
+  });
+
   // Контекст базы (RLS) на каждый запрос к API: соединение запроса и роль пользователя
   app.use('/api', dbContextMiddleware());
 
