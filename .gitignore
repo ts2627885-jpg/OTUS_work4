@@ -98,3 +98,5 @@ frontend/public/__*.html
 # Lock-файлы приложений нужны для воспроизводимой установки (npm ci в CI и Docker)
 !backend/package-lock.json
 !frontend/package-lock.json
+.vercel
+.env*
